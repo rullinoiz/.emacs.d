@@ -1,0 +1,10 @@
+.DS_Store
+.dap-breakpoints
+tramp
+
+.cache/
+auto-save-list/
+autosave/
+backups/
+eln-cache/
+elpa/
