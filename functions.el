@@ -28,3 +28,15 @@
  (lambda ()
    (if (string= --functions-load-file-name buffer-file-name)
        (eval-buffer))))
+
+(defun eval-region-and-kill ()
+  "Evaluate the region and kill the result."
+  (interactive)
+  (let ((result (eval-last-sexp nil)))
+    (kill-new result)
+    (message result)))
+
+(with-eval-after-load
+ 'lisp-mode
+   (define-key lisp-mode-shared-map (kbd "C-c e k") 'eval-region-and-kill))
+

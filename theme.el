@@ -5,7 +5,9 @@
 ;; load theme on startup
 (add-hook
  'after-init-hook
- (lambda () (load-theme 'deeper-blue)))
+ (lambda ()
+   (load-theme 'deeper-blue)
+   (set-background-color "black")))
 
 (add-hook
  'window-setup-hook

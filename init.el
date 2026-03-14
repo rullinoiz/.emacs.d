@@ -1,7 +1,7 @@
 ;;; -*- lexical-binding: t -*-
 
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
 ;; custom functions
@@ -11,12 +11,28 @@
 (xterm-mouse-mode 1)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
+(global-company-mode)
+(ido-mode 1)
+
+;; dired: use GNU ls on mac
+(when (string= system-type "darwin")
+  (setq dired-use-ls-dired t
+	insert-directory-program "/opt/homebrew/bin/gls"))
+
+;; dired git
+(with-eval-after-load 'dired
+  (define-key dired-mode-map ")" 'dired-git-info-mode))
+(setq dgi-auto-hide-details-p nil)
+
+;; simpc-mode
+(add-to-list 'load-path (concat user-emacs-directory "modes/simpc-mode/"))
+(require 'simpc-mode)
+(add-to-list 'auto-mode-alist '("\\.[hc]\\(pp\\)?\\'" . simpc-mode))
 
 ;; lsp support
 (use-package lsp-mode
   :ensure t
   :hook (
-	 (lua-mode . lsp-mode)
 	 (python-mode . lsp-mode)
 	 (lsp-mode . lsp-enable-which-key-integration))
   :config
