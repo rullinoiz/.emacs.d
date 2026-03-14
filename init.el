@@ -1,8 +1,12 @@
 ;;; -*- lexical-binding: t -*-
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
+(use-package package
+  :init (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+  :commands (package-initialize)
+  :config (package-initialize))
+;; (require 'package)
+;; (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+;; (package-initialize)
 
 ;; custom functions
 (load-file (concat user-emacs-directory "functions.el"))
@@ -11,18 +15,21 @@
 (xterm-mouse-mode 1)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
-(global-company-mode)
-(ido-mode 1)
 
-;; dired: use GNU ls on mac
-(when (string= system-type "darwin")
-  (setq dired-use-ls-dired t
-	insert-directory-program "/opt/homebrew/bin/gls"))
+(use-package company
+  :commands (global-company-mode)
+  :init (global-company-mode))
 
 ;; dired git
-(with-eval-after-load 'dired
-  (define-key dired-mode-map ")" 'dired-git-info-mode))
-(setq dgi-auto-hide-details-p nil)
+(use-package dired
+  :commands (dired-git-info-mode)
+  :bind (:map dired-mode-map
+	      (")" . dired-git-info-mode))
+  :config
+  (setq dgi-auto-hide-details-p nil)
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired t
+	  insert-directory-program "/opt/homebrew/bin/gls")))
 
 ;; simpc-mode
 (add-to-list 'load-path (concat user-emacs-directory "modes/simpc-mode/"))
@@ -32,8 +39,7 @@
 ;; lsp support
 (use-package lsp-mode
   :ensure t
-  :hook (
-	 (python-mode . lsp-mode)
+  :hook ((python-mode . lsp-mode)
 	 (lsp-mode . lsp-enable-which-key-integration))
   :config
   (setq lsp-enable-symbol-highlighting t)
@@ -103,6 +109,16 @@
 	  )
 	)
   )
+
+(use-package smex
+  :ensure t
+  :config
+  (ido-mode 1)
+  (setq ido-everywhere t)
+  :commands (smex-major-mode-commands)
+  :bind (("M-x" . smex)
+	 ("M-X" . smex-major-mode-commands)
+	 ("C-c C-c M-x" . execute-extended-command)))
 
 ;; load theme settings
 (load-file (concat user-emacs-directory "theme.el"))

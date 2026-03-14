@@ -12,8 +12,8 @@
  '(package-selected-packages
    '(## auctex cmake-mode company-quickhelp dap-mode dired-git-info
 	javap-mode kotlin-mode llama lsp-ui lua-mode luarocks
-	minesweeper org-roam python-mode transpose-frame treesit-fold
-	xkcd)))
+	minesweeper org-roam python-mode smex transpose-frame treesit
+	treesit-fold xkcd)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

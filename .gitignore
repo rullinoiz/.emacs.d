@@ -2,6 +2,7 @@
 .dap-breakpoints
 ede-projects.el
 ido.last
+smex-items
 tramp
 
 .cache/

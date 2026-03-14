@@ -3,11 +3,12 @@
 (setq --theme-load-file-name load-file-name)
 
 ;; load theme on startup
+(load-theme 'deeper-blue)
+(set-background-color "black")
+
 (add-hook
- 'after-init-hook
- (lambda ()
-   (load-theme 'deeper-blue)
-   (set-background-color "black")))
+ 'window-setup-hook
+ (lambda () (set-background-color "black")))
 
 (add-hook
  'window-setup-hook

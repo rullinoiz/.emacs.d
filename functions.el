@@ -16,6 +16,11 @@
   (interactive)
   (find-file --functions-load-file-name))
 
+(global-set-key (kbd "C-c o i") 'open-init-file)
+(global-set-key (kbd "C-c o f") 'open-func-file)
+
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
 ;; custom hooks
 (add-hook
  'before-save-hook
