@@ -1,3 +1,6 @@
 [submodule "modes/simpc-mode"]
 	path = modes/simpc-mode
 	url = https://github.com/rexim/simpc-mode.git
+[submodule "modes/org-present"]
+	path = modes/org-present
+	url = https://github.com/rlister/org-present.git

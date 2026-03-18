@@ -4,6 +4,8 @@ ede-projects.el
 ido.last
 smex-items
 tramp
+*-autoloads.el
+*.elc
 
 .cache/
 auto-save-list/
