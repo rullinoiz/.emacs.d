@@ -31,6 +31,7 @@
 		("C-c o f" . open-func-file)
 		("C-c C-o f" . open-func-file-other-window)
 		("C-c o l" . find-library)
+		("C-c C-o l" . find-library-other-window)
 		("<escape>" . keyboard-escape-quit)
 		("M-RET" . toggle-frame-fullscreen)))
   (global-set-key (kbd (car bind)) (cdr bind)))

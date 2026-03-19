@@ -52,15 +52,31 @@
 (defconst intercal-mode-gerunds-c-regex
   (concat "\\<\\(" (regexp-opt intercal-mode-gerunds-c) "\\>\\)"))
 
-(defvar intercal-font-lock-keywords
-  `(("(\\([0-9]+\\))" (1 font-lock-variable-name-face))
-    ("\\(DO\\|PLEASE\\)" (1 font-lock-keyword-face))
-    (,intercal-mode-statements-c-regex (1 font-lock-function-name-face))
-    (,intercal-mode-gerunds-c-regex (1 font-lock-builtin-face))
-    ("\\(BY\\|SUB\\|[!\"$&'?~¢\\+]\\)" (1 font-lock-operator-face))
-    ("\\([.,:;][0-9]+\\)" (1 font-lock-variable-name-face))
-    ("\\(#[0-9]+\\)" (1 font-lock-constant-face))
-    ("\\(^.*NOT.*\\)" (1 font-lock-comment-face t)))
+;; (defvar intercal-font-lock-keywords
+;;   `(("(\\([0-9]+\\))" (1 font-lock-variable-name-face))
+;;     ("\\(DO\\|PLEASE\\)" (1 font-lock-keyword-face))
+;;     (,intercal-mode-statements-c-regex (1 font-lock-function-name-face))
+;;     (,intercal-mode-gerunds-c-regex (1 font-lock-builtin-face))
+;;     ("\\(BY\\|SUB\\|[!\"$&'?~¢\\+]\\)" (1 font-lock-operator-face))
+;;     ("\\([.,:;][0-9]+\\)" (1 font-lock-variable-name-face))
+;;     ("\\(#[0-9]+\\)" (1 font-lock-constant-face))
+;;     ("\\(^.*NOT.*\\)" (1 font-lock-comment-face t)))
+;;   "Highlight rules for `intercal-mode'.")
+
+(defvar intercal-mode-font-lock-keywords
+  (let ((identifiers '("DO" "PLEASE" "MAYBE"))
+	(qualifiers intercal-mode-statements-c)
+	(operators '("BY" "SUB" "!" "\"" "$" "&" "'" "?" "~" "¢" "V" "\\+"))
+	(gerunds intercal-mode-gerunds-c))
+    `(("\\(^.*NOT.*\\)" . font-lock-comment-face)
+      (,(regexp-opt identifiers 'symbols) . font-lock-keyword-face)
+      (,(regexp-opt qualifiers 'symbols) . font-lock-function-name-face)
+      (,(regexp-opt operators) . font-lock-type-face)
+      (,(regexp-opt gerunds 'symbols) . font-lock-builtin-face)
+      ("(\\([0-9]+\\))" . font-lock-variable-name-face)
+      ("#[0-9]+" . font-lock-constant-face)
+      ("%[0-9]+" . font-lock-constant-face)
+      ("[.,:;][0-9]+" . font-lock-variable-name-face)))
   "Highlight rules for `intercal-mode'.")
 
 (defun intercal-indent-line ()
@@ -70,7 +86,8 @@
 ;;;###autoload
 (define-derived-mode intercal-mode prog-mode "INTERCAL"
   "Major mode for INTERCAL"
-  (setq font-lock-defaults '(intercal-font-lock-keywords nil))
+  (setq font-lock-defaults '(intercal-mode-font-lock-keywords))
+  (setq font-lock-string-face nil)
   :custom 'intercal-mode)
 
 ;;;###autoload
