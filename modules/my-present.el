@@ -14,6 +14,7 @@
   (setq text-scale-mode-amount 4)
   (setq org-hide-emphasis-markers t)
   (setq cursor-type nil)
+  (setq olivetti-minimum-body-width 100)
   (set-face-attribute 'org-meta-line nil :foreground (face-attribute 'default :background))
   (font-lock-flush))
 
@@ -51,8 +52,8 @@
 (use-package org
   :bind (:map org-mode-map
 	      ("<f9>" . org-tree-slide-mode))
-  :custom
-  (org-image-actual-width nil)
+  :config
+  (setq org-image-actual-width nil)
   (org-display-inline-images))
 
 (use-package org-tree-slide

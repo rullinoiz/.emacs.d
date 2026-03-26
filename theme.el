@@ -9,7 +9,18 @@
    (load-theme 'deeper-blue)
    (set-background-color "black")
    (unless (display-graphic-p (selected-frame))
-	      (set-face-background 'default "unspecified-bg" (selected-frame)))))
+     (set-face-background 'default nil (selected-frame)))))
+
+(add-hook
+ 'window-size-change-functions
+ (lambda (frame)
+   (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
+     (cond ((memq fullscreen-state '(fullboth fullscreen))
+	    ;; Code to run when entering fullscreen
+	    (set-frame-parameter frame 'alpha-background 100)
+	    (t
+	     ;; Code to run when exiting fullscreen or in normal state
+	     (set-frame-parameter frame 'alpha-background 60)))))))
 
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -17,8 +28,12 @@
 (setq inhibit-startup-screen t)
 
 ;; transparent window
-(set-frame-parameter (selected-frame) 'alpha-background 90)
-(add-to-list 'default-frame-alist '(alpha-background . 90))
+(set-frame-parameter (selected-frame) 'alpha-background 60)
+;;(add-to-list 'default-frame-alist '(undecorated-round . t))
+(add-to-list 'default-frame-alist '(alpha-background . 60))
+(add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
+
+;;(setq-default header-line-format "Emacs 31")
 
 (add-hook
  'before-save-hook
@@ -42,11 +57,22 @@
 (add-hook #'org-mode-hook #'visual-line-mode)
 
 (use-package doom-modeline
-  :ensure t
   :init
-  (setq doom-modeline-height 30)
+  (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
+  (setq doom-modeline-height 25)
   (setq doom-modeline-position-line-format nil)
   (setq doom-modeline-minor-modes t)
   (setq nerd-icons-scale-factor 1.2)
   
   (doom-modeline-mode 1))
+
+;; (use-package spacious-padding
+;;   :ensure t
+;;   :init (spacious-padding-mode 1)
+;;   :config
+;;   (setq spacious-padding-widths
+;; 	'( :internal-border-width 15
+;; 	   :header-line-width 0
+;; 	   :mode-line-width 0
+;; 	   :right-divider-width 0
+;; 	   :fringe-width 0)))

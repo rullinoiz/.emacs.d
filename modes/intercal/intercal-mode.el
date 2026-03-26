@@ -47,11 +47,6 @@
   (append intercal-mode-gerunds-72
 	  '("COMING FROM" "TRYING AGAIN")))
 
-(defconst intercal-mode-statements-c-regex
-  (concat "\\<\\(" (regexp-opt intercal-mode-statements-c) "\\>\\)"))
-(defconst intercal-mode-gerunds-c-regex
-  (concat "\\<\\(" (regexp-opt intercal-mode-gerunds-c) "\\>\\)"))
-
 ;; (defvar intercal-font-lock-keywords
 ;;   `(("(\\([0-9]+\\))" (1 font-lock-variable-name-face))
 ;;     ("\\(DO\\|PLEASE\\)" (1 font-lock-keyword-face))
@@ -79,9 +74,14 @@
       ("[.,:;][0-9]+" . font-lock-variable-name-face)))
   "Highlight rules for `intercal-mode'.")
 
-(defun intercal-indent-line ()
+(defun intercal-mode-indent-line ()
   "Indent current line."
   (interactive))
+
+(defun intercal-mode-find-label-definition (label)
+  "Find the label's definiton in the source."
+  (interactive "nLabel: "))
+  
 
 ;;;###autoload
 (define-derived-mode intercal-mode prog-mode "INTERCAL"

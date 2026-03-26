@@ -9,11 +9,15 @@
   
   (concat user-emacs-directory relative-path))
 
-(use-package package
-  :ensure nil
-  :init (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-  :commands (package-initialize)
-  :config (package-initialize))
+(defun add-directory-to-exec-path (path)
+  "Add a directory to the PATH environment variable."
+  (interactive "DDirectory: ")
+  (add-to-list 'exec-path path)
+  (setenv "PATH" (concat path ":" (getenv "PATH"))))
+
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
 
 ;; custom functions
 (load-file (concat user-emacs-directory "functions.el"))
@@ -26,6 +30,12 @@
 (setq make-backup-files nil)
 (setq auto-save-default nil)
 
+(add-hook
+ 'org-mode-hook
+ (lambda ()
+   (setq org-latex-create-formula-image-program 'imagemagick)))
+
+(add-directory-to-exec-path "/Library/TeX/texbin")
 (setenv "JAVA_HOME" "/Library/Java/JavaVirtualMachines/zulu-23.jdk/Contents/Home")
 (xterm-mouse-mode 1)
 
@@ -35,6 +45,7 @@
   :hook ((proced-mode . proced-toggle-auto-update)))
 
 (use-package company
+  :ensure t
   :init (global-company-mode))
 
 ;; (use-package telephone-line
@@ -63,11 +74,9 @@
   :mode "\\.[hc]\\(pp\\)?\\'")
 
 (use-package company-quickhelp
-  :ensure t
-  :config (company-quickhelp-mode 1))
+  :init (company-quickhelp-mode 1))
 
 (use-package smex
-  :ensure t
   :init
   (ido-mode 1)
   (setq ido-everywhere t)
@@ -75,10 +84,13 @@
 	 ("M-X" . smex-major-mode-commands)
 	 ("C-c C-c M-x" . execute-extended-command)))
 
-;; (use-package dslide
-;;   :ensure t
-;;   :hook ((dslide-deck-start . (lambda () (setq org-hide-emphasis-markers t)))
-;; 	 (dslide-deck-stop . (lambda () (setq org-hide-emphasis-markers nil)))))
+(use-package poke)
+
+
+(dolist (hook '(c-mode
+		 kotlin-mode
+		 lua-mode))
+  (add-hook hook 'eglot-ensure))
 
 (use-package intercal-mode
   :ensure nil

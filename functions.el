@@ -26,12 +26,18 @@
   (interactive)
   (find-file-other-window --functions-load-file-name))
 
+(defun open-file-in-emacs-directory (file-path)
+  "Open a file inside of the `user-emacs-directory'."
+  (interactive (eval (nth 1 (interactive-form 'file-in-emacs-directory))))
+  (find-file file-path))
+
 (dolist (bind #'(("C-c o i" . open-init-file)
 		("C-c C-o i" . open-init-file-other-window)
 		("C-c o f" . open-func-file)
 		("C-c C-o f" . open-func-file-other-window)
 		("C-c o l" . find-library)
 		("C-c C-o l" . find-library-other-window)
+		("C-c o C-f" . open-file-in-emacs-directory)
 		("<escape>" . keyboard-escape-quit)
 		("M-RET" . toggle-frame-fullscreen)))
   (global-set-key (kbd (car bind)) (cdr bind)))
