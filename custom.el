@@ -15,11 +15,11 @@
  '(ns-command-modifier 'super)
  '(package-selected-packages
    '(## auctex cmake-mode company-quickhelp dired-git-info doom-modeline
-	hide-mode-line javap-mode kotlin-mode llama logos lua-mode
-	luarocks minesweeper olivetti org-roam org-tree-slide php-mode
-	poke poke-mode python-mode simpc-mode smex telephone-line
-	topspace transpose-frame treesit treesit-fold
-	visual-fill-column xkcd)))
+	esup git-gutter hide-mode-line javap-mode kotlin-mode llama
+	logos lua-mode luarocks minesweeper olivetti org-roam
+	org-tree-slide php-mode poke poke-mode python-mode simpc-mode
+	smex telephone-line topspace transpose-frame treesit
+	treesit-fold visual-fill-column xkcd)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

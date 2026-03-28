@@ -20,12 +20,12 @@
 (package-initialize)
 
 ;; custom functions
-(load-file (concat user-emacs-directory "functions.el"))
+(load-file (file-in-emacs-directory "functions.el"))
 
 ;; internal emacs changes
-(add-to-list 'load-path (concat user-emacs-directory "modules"))
+(add-to-list 'load-path (file-in-emacs-directory "modules"))
 
-(setq custom-file (concat user-emacs-directory "custom.el"))
+(setq custom-file (file-in-emacs-directory "custom.el"))
 (load custom-file)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
@@ -45,8 +45,12 @@
   :hook ((proced-mode . proced-toggle-auto-update)))
 
 (use-package company
-  :ensure t
-  :init (global-company-mode))
+  :init
+  (setq company-files-exclusions '(".git/" ".DS_Store"))
+  (global-company-mode))
+
+(use-package git-gutter
+  :init (global-git-gutter-mode))
 
 ;; (use-package telephone-line
 ;;   :commands (telephone-line-mode)
@@ -84,17 +88,16 @@
 	 ("M-X" . smex-major-mode-commands)
 	 ("C-c C-c M-x" . execute-extended-command)))
 
-(use-package poke)
-
-
-(dolist (hook '(c-mode
-		 kotlin-mode
-		 lua-mode))
+(dolist (hook '(c-mode-hook
+		lua-mode-hook
+		python-mode-hook
+		java-mode-hook))
   (add-hook hook 'eglot-ensure))
 
 (use-package intercal-mode
   :ensure nil
-  :load-path "modes/intercal/")
+  :load-path "modes/intercal/"
+  :mode "\\.i[0-9]*\\'")
 
 (use-package my-present)
 
