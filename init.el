@@ -20,7 +20,7 @@
 (package-initialize)
 
 ;; custom functions
-(load-file (file-in-emacs-directory "functions.el"))
+(load (file-in-emacs-directory "functions.el"))
 
 ;; internal emacs changes
 (add-to-list 'load-path (file-in-emacs-directory "modules"))
@@ -29,6 +29,7 @@
 (load custom-file)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
+(setq use-package-always-ensure t)
 
 (add-hook
  'org-mode-hook
@@ -80,10 +81,17 @@
 (use-package company-quickhelp
   :init (company-quickhelp-mode 1))
 
-(use-package smex
+(use-package ido
+  :ensure nil
   :init
   (ido-mode 1)
   (setq ido-everywhere t)
+  (setq ido-ignore-extensions t)
+  (setq ido-ignore-files '(".DS_Store" ".git"))
+  (dolist (extension '(".pyc" ".elc"))
+    (add-to-list 'completion-ignored-extensions extension)))
+
+(use-package smex
   :bind (("M-x" . smex)
 	 ("M-X" . smex-major-mode-commands)
 	 ("C-c C-c M-x" . execute-extended-command)))
@@ -99,8 +107,10 @@
   :load-path "modes/intercal/"
   :mode "\\.i[0-9]*\\'")
 
-(use-package my-present)
+(use-package my-present
+  :ensure nil
+  :load-path "modules/")
 
 ;; load theme settings
-(load-file (concat user-emacs-directory "theme.el"))
+(load (concat user-emacs-directory "theme.el"))
 

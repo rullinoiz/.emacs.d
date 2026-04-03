@@ -65,4 +65,3 @@
 (with-eval-after-load
  #'lisp-mode
    (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
-

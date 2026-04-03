@@ -22,9 +22,14 @@
 	     ;; Code to run when exiting fullscreen or in normal state
 	     (set-frame-parameter frame 'alpha-background 60)))))))
 
-(scroll-bar-mode -1)
-(tool-bar-mode -1)
-(global-display-line-numbers-mode)
+(when (display-graphic-p)
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1))
+
+(add-hook
+ 'prog-mode-hook
+ 'display-line-numbers-mode)
+
 (setq inhibit-startup-screen t)
 
 ;; transparent window
@@ -38,7 +43,7 @@
 (add-hook
  'before-save-hook
  (lambda ()
-   (if (string= --theme-load-file-name load-file-name)
+   (if (string= theme--load-file-name load-file-name)
        (eval-buffer))))
 
 (defun open-theme-file ()
@@ -54,7 +59,7 @@
 (global-set-key (kbd "C-c o t") #'open-theme-file)
 (global-set-key (kbd "C-c C-o t") #'open-theme-file-other-window)
 
-(add-hook #'org-mode-hook #'visual-line-mode)
+(add-hook 'org-mode-hook 'visual-line-mode)
 
 (use-package doom-modeline
   :init
