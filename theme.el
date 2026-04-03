@@ -8,8 +8,9 @@
    ;; load theme on startup
    (load-theme 'deeper-blue)
    (set-background-color "black")
-   (unless (display-graphic-p (selected-frame))
-     (set-face-background 'default nil (selected-frame)))))
+   (when (not (display-graphic-p (selected-frame)))
+     (set-face-background 'default nil (selected-frame))
+     (set-background-color "unspecified-bg"))))
 
 (add-hook
  'window-size-change-functions
@@ -68,6 +69,10 @@
   (setq doom-modeline-position-line-format nil)
   (setq doom-modeline-minor-modes t)
   (setq nerd-icons-scale-factor 1.2)
+  
+  (when (not (display-graphic-p (selected-frame)))
+    (setq doom-modeline-major-mode-icon nil)
+    (setq doom-modeline-vcs-icon nil))
   
   (doom-modeline-mode 1))
 
