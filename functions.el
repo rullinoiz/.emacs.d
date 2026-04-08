@@ -16,6 +16,16 @@
   (interactive)
   (find-file-other-window user-init-file))
 
+(defun open-early-init-file ()
+  "Open the early-init file."
+  (interactive)
+  (find-file (file-in-emacs-directory "early-init.el")))
+
+(defun open-early-init-file-other-window ()
+  "Open the early-init file in another window."
+  (interactive)
+  (find-file-other-window (file-in-emacs-directory "early-init.el")))
+
 (defun open-func-file ()
   "Open the functions file."
   (interactive)

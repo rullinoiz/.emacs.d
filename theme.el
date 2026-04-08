@@ -3,41 +3,18 @@
 (defvar theme--load-file-name (file-in-emacs-directory "theme.el"))
 
 (add-hook
- 'window-setup-hook
- (lambda ()
-   ;; load theme on startup
-   (load-theme 'deeper-blue)
-   (set-background-color "black")
-   (when (not (display-graphic-p (selected-frame)))
-     (set-face-background 'default nil (selected-frame))
-     (set-background-color "unspecified-bg"))))
-
-(add-hook
  'window-size-change-functions
  (lambda (frame)
    (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
-     (cond ((memq fullscreen-state '(fullboth fullscreen))
-	    ;; Code to run when entering fullscreen
-	    (set-frame-parameter frame 'alpha-background 100)
-	    (t
-	     ;; Code to run when exiting fullscreen or in normal state
-	     (set-frame-parameter frame 'alpha-background 60)))))))
-
-(when (display-graphic-p)
-  (scroll-bar-mode -1)
-  (tool-bar-mode -1))
+     (cond ((memq fullscreen-state '(fullboth fullscreen)) (set-frame-parameter frame 'alpha-background 100))
+	    (t (set-frame-parameter frame 'alpha-background 60))))))
 
 (add-hook
  'prog-mode-hook
  'display-line-numbers-mode)
 
-(setq inhibit-startup-screen t)
-
-;; transparent window
-(set-frame-parameter (selected-frame) 'alpha-background 60)
-;;(add-to-list 'default-frame-alist '(undecorated-round . t))
-(add-to-list 'default-frame-alist '(alpha-background . 60))
-(add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
+(when (display-graphic-p)
+  (tool-bar-mode -1))
 
 ;;(setq-default header-line-format "Emacs 31")
 
@@ -70,7 +47,7 @@
   (setq doom-modeline-minor-modes t)
   (setq nerd-icons-scale-factor 1.2)
   
-  (when (not (display-graphic-p (selected-frame)))
+  (unless (display-graphic-p (selected-frame))
     (setq doom-modeline-major-mode-icon nil)
     (setq doom-modeline-vcs-icon nil))
   

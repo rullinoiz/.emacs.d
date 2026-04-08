@@ -15,6 +15,12 @@
   (add-to-list 'exec-path path)
   (setenv "PATH" (concat path ":" (getenv "PATH"))))
 
+(cl-defmacro os-switch (&key darwin windows linux)
+  "Perform a different operation depending on the host OS."
+  `(cond ((eq system-type 'darwin) (progn ,darwin))
+	((eq system-type 'windows) (progn ,windows))
+	((eq system-type 'linux) (progn ,linux))))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -25,19 +31,20 @@
 ;; internal emacs changes
 (add-to-list 'load-path (file-in-emacs-directory "modules"))
 
-(setq custom-file (file-in-emacs-directory "custom.el"))
+(setq custom-file (file-in-emacs-directory "custom.el")
+      make-backup-files nil
+      auto-save-default nil
+      use-package-always-ensure t
+      warning-suppress-log-types '((files missing-lexbind-cookie)))
 (load custom-file)
-(setq make-backup-files nil)
-(setq auto-save-default nil)
-(setq use-package-always-ensure t)
 
 (add-hook
  'org-mode-hook
  (lambda ()
    (setq org-latex-create-formula-image-program 'imagemagick)))
 
-(add-directory-to-exec-path "/Library/TeX/texbin")
-(setenv "JAVA_HOME" "/Library/Java/JavaVirtualMachines/zulu-23.jdk/Contents/Home")
+(when (eq system-type 'darwin)
+  (add-directory-to-exec-path "/Library/TeX/texbin"))
 (xterm-mouse-mode 1)
 
 (use-package proced
@@ -69,7 +76,7 @@
 	      (")" . dired-git-info-mode))
   :config
   (setq dgi-auto-hide-details-p nil)
-  (when (string= system-type "darwin")
+  (when (eq system-type 'darwin)
     (setq dired-use-ls-dired t
 	  insert-directory-program "/opt/homebrew/bin/gls")))
 
@@ -101,6 +108,14 @@
 		python-mode-hook
 		java-mode-hook))
   (add-hook hook 'eglot-ensure))
+
+(use-package maxima
+  :mode ("\\.mac\\'" . maxima-mode)
+  :interpreter ("maxima" . maxima-mode))
+
+(use-package imaxima
+  :ensure nil
+  :if (locate-library "imaxima.el"))
 
 (use-package intercal-mode
   :ensure nil
