@@ -1,5 +1,10 @@
 ;;; -*- lexical-binding: t -*-
 
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+;;; Functions
 (defun file-in-emacs-directory (relative-path)
   "Get the path of a file inside of the `user-emacs-directory'."
   (interactive (list (read-file-name "File: " user-emacs-directory nil nil nil)))
@@ -21,12 +26,144 @@
 	((eq system-type 'windows-nt) (progn ,windows))
 	((eq system-type 'gnu/linux) (progn ,linux))))
 
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
+(defun eval-region-and-kill ()
+  "Evaluate the region and kill the result."
+  (interactive)
+  (let ((result (eval-last-sexp nil)))
+    (kill-new result)
+    (message result)))
 
-;; custom functions
-(load (file-in-emacs-directory "functions.el"))
+(defun open-init-file ()
+  "Open the init file."
+  (interactive)
+  (find-file user-init-file))
+
+(defun open-init-file-other-window ()
+  "Open the init file in another window."
+  (interactive)
+  (find-file-other-window user-init-file))
+
+(defun open-early-init-file ()
+  "Open the early-init file."
+  (interactive)
+  (find-file (file-in-emacs-directory "early-init.el")))
+
+(defun open-early-init-file-other-window ()
+  "Open the early-init file in another window."
+  (interactive)
+  (find-file-other-window (file-in-emacs-directory "early-init.el")))
+
+(defun my/goto-functions ()
+  "Internal function to jump to the function header in the init file."
+  (interactive)
+  (goto-line 1)
+  (re-search-forward "^;;; Functions"))
+
+(defun open-func-file ()
+  "Open the functions file."
+  (interactive)
+  (open-init-file)
+  (my/goto-functions))
+
+(defun open-func-file-other-window ()
+  "Open the functions file in another window."
+  (interactive)
+  (open-init-file-other-window)
+  (my/goto-functions))
+
+(defun my/goto-theme ()
+  "Internal function to jump to the theme header in the init file."
+  (interactive)
+  (goto-line 1)
+  (re-search-forward "^;;; Theme"))
+
+(defun open-theme-file ()
+  "Open the theme file."
+  (interactive)
+  (open-init-file)
+  (my/goto-theme))
+
+(defun open-theme-file-other-window ()
+  "Open the theme file in another window."
+  (interactive)
+  (open-init-file-other-window)
+  (my/goto-theme))
+
+(defun my/goto-keymap ()
+  "Internal function to jump to the keymap header in the init file."
+  (interactive)
+  (goto-line 1)
+  (re-search-forward "^;;; Keymap"))
+
+(defun open-keymap-file ()
+  "Open the keymap file."
+  (interactive)
+  (open-init-file)
+  (my/goto-keymap))
+
+(defun open-keymap-file-other-window ()
+  "Open the keympa file in another window."
+  (interactive)
+  (open-init-file-other-window)
+  (my/goto-keymap))
+
+(defun open-file-in-emacs-directory (file-path)
+  "Open a file inside of the `user-emacs-directory'."
+  (interactive (eval (nth 1 (interactive-form 'file-in-emacs-directory))))
+  (find-file file-path))
+
+;;; Keymap
+(dolist (bind #'(("C-c o i" . open-init-file)
+		("C-c C-o i" . open-init-file-other-window)
+		("C-c o f" . open-func-file)
+		("C-c C-o f" . open-func-file-other-window)
+		("C-c o t" . open-theme-file)
+		("C-c C-o t" . open-theme-file-other-window)
+		("C-c o k" . open-keymap-file)
+		("C-c C-o k" . open-keymap-file-other-window)
+		("C-c o l" . find-library)
+		("C-c C-o l" . find-library-other-window)
+		("C-c o C-f" . open-file-in-emacs-directory)
+		("<escape>" . keyboard-escape-quit)
+		("M-RET" . toggle-frame-fullscreen)))
+  (global-set-key (kbd (car bind)) (cdr bind)))
+
+(with-eval-after-load
+ #'lisp-mode
+ (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
+
+;;; Theme
+(add-hook 'org-mode-hook 'visual-line-mode)
+
+(add-hook
+ 'window-size-change-functions
+ (lambda (frame)
+   (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
+     (cond ((memq fullscreen-state '(fullboth fullscreen))
+	    (set-frame-parameter frame 'alpha-background 100))
+	   (t
+	    (set-frame-parameter frame 'alpha-background 60))))))
+
+(add-hook
+ 'prog-mode-hook
+ 'display-line-numbers-mode)
+
+(when (display-graphic-p)
+  (tool-bar-mode -1))
+
+(use-package doom-modeline
+  :init
+  (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
+  (setq doom-modeline-height 25)
+  (setq doom-modeline-position-line-format nil)
+  (setq doom-modeline-minor-modes t)
+  (setq nerd-icons-scale-factor 1.2)
+  
+  (unless (display-graphic-p (selected-frame))
+    (setq doom-modeline-major-mode-icon nil)
+    (setq doom-modeline-vcs-icon nil))
+  
+  (doom-modeline-mode 1))
 
 ;; internal emacs changes
 (add-to-list 'load-path (file-in-emacs-directory "modules"))
@@ -45,8 +182,8 @@
 
 (when (eq system-type 'darwin)
   (add-directory-to-exec-path "/Library/TeX/texbin"))
-(xterm-mouse-mode 1)
 
+;;; Package configuration
 (use-package proced
   :ensure nil
   :config (setq proced-auto-update-interval 1)
@@ -59,14 +196,6 @@
 
 (use-package git-gutter
   :init (global-git-gutter-mode))
-
-;; (use-package telephone-line
-;;   :commands (telephone-line-mode)
-;;   :init ((setq telephone-line-lhs
-;; 	       '((accent . (telephone-line-vc-segment
-;; 			    telephone-line-erc-modified-channels-segment
-;; 			    telephone-line-process-segment))))
-;;   :config (telephone-line-mode 1))
 
 ;; dired git
 (use-package dired
@@ -125,7 +254,4 @@
 (use-package my-present
   :ensure nil
   :load-path "modules/")
-
-;; load theme settings
-(load (concat user-emacs-directory "theme.el"))
 
