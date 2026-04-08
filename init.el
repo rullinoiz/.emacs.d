@@ -18,8 +18,8 @@
 (cl-defmacro os-switch (&key darwin windows linux)
   "Perform a different operation depending on the host OS."
   `(cond ((eq system-type 'darwin) (progn ,darwin))
-	((eq system-type 'windows) (progn ,windows))
-	((eq system-type 'linux) (progn ,linux))))
+	((eq system-type 'windows-nt) (progn ,windows))
+	((eq system-type 'gnu/linux) (progn ,linux))))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
