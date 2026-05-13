@@ -14,13 +14,13 @@
  '(ns-alternate-modifier 'meta)
  '(ns-command-modifier 'super)
  '(package-selected-packages
-   '(## auctex cmake-mode company-quickhelp dired-git-info doom-modeline
-	esup git-gutter hide-mode-line ido-vertical-mode imaxima
-	javap-mode kotlin-mode llama logos lua-mode luarocks maxima
-	minesweeper my-present olivetti org-roam org-tree-slide
-	php-mode poke poke-mode python-mode simpc-mode smex
-	telephone-line topspace transpose-frame treesit treesit-fold
-	visual-fill-column xkcd)))
+   '(## auctex cmake-mode cobol-mode company-quickhelp dired-git-info
+	doom-modeline elisa esup git-gutter hide-mode-line
+	ido-vertical-mode imaxima javap-mode kotlin-mode llama logos
+	lua-mode luarocks maxima minesweeper my-present olivetti
+	org-roam org-tree-slide php-mode poke poke-mode python-mode
+	simpc-mode smex telephone-line topspace transpose-frame
+	treesit treesit-fold visual-fill-column xkcd)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

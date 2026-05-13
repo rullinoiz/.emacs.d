@@ -5,6 +5,34 @@
 (package-initialize)
 
 ;;; Functions
+(defun get-environment-variables ()
+  "Get a list of all defined environment variables."
+  (mapcar #'(lambda (str)
+	      (string-match "\\([a-zA-Z0-9_]+\\)=." str)
+	      (match-string 1 str)) process-environment))
+
+(defun --prompt-env ()
+  "Prompt the user for an environment variable."
+  (completing-read "Environment variable: " (get-environment-variables) nil nil))
+
+(defun prepend-env (variable value)
+  "Prepend some value to an environment variable."
+  (interactive (list (--prompt-env)
+		     (read-string "Value to prepend: ")))
+  (let ((newenv (concat value ":" (getenv variable))))
+    (setenv variable newenv)
+    (when (called-interactively-p 'any)
+      (message "%s" newenv))))
+
+(defun append-env (variable value)
+  "Append some value to an environment variable."
+  (interactive (list (--prompt-env)
+		     (read-string "Value to append: ")))
+  (let ((newenv (concat (getenv variable) ":" value)))
+    (setenv variable newenv)
+    (when (called-interactively-p 'any)
+      (message "%s" newenv))))
+
 (defun file-in-emacs-directory (relative-path)
   "Get the path of a file inside of the `user-emacs-directory'."
   (interactive (list (read-file-name "File: " user-emacs-directory nil nil nil)))
@@ -18,7 +46,7 @@
   "Add a directory to the PATH environment variable."
   (interactive "DDirectory: ")
   (add-to-list 'exec-path path)
-  (setenv "PATH" (concat path ":" (getenv "PATH"))))
+  (prepend-env "PATH" path))
 
 (cl-defmacro os-switch (&key darwin windows linux)
   "Perform a different operation depending on the host OS."
@@ -109,7 +137,7 @@
 
 (defun open-file-in-emacs-directory (file-path)
   "Open a file inside of the `user-emacs-directory'."
-  (interactive (eval (nth 1 (interactive-form 'file-in-emacs-directory))))
+  (interactive (eval (nth 1 (interactive-form #'file-in-emacs-directory))))
   (find-file file-path))
 
 ;;; Keymap
@@ -129,7 +157,7 @@
   (global-set-key (kbd (car bind)) (cdr bind)))
 
 (with-eval-after-load
- #'lisp-mode
+ 'lisp-mode
  (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
 
 ;;; Theme
@@ -137,33 +165,45 @@
 
 (add-hook
  'window-size-change-functions
- (lambda (frame)
+ #'(lambda (frame)
    (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
      (cond ((memq fullscreen-state '(fullboth fullscreen))
 	    (set-frame-parameter frame 'alpha-background 100))
-	   (t
-	    (set-frame-parameter frame 'alpha-background 60))))))
+	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :linux 80 :windows 80)))))))
 
 (add-hook
  'prog-mode-hook
- 'display-line-numbers-mode)
+ #'display-line-numbers-mode)
 
-(when (display-graphic-p)
-  (tool-bar-mode -1))
+(defun display-line-numbers-mode-off () (display-line-numbers-mode 0))
+
+(dolist (hook '(help-mode-hook
+		dired-mode-hook
+		compilation-mode-hook))
+  (add-hook hook #'display-line-numbers-mode-off))
+
+(add-hook
+ 'window-setup-hook
+ #'(lambda ()
+   (when (display-graphic-p (selected-frame))
+     (tool-bar-mode -1))))
 
 (use-package doom-modeline
   :init
-  (setq doom-modeline-buffer-file-name-style 'file-name-with-project)
-  (setq doom-modeline-height 25)
-  (setq doom-modeline-position-line-format nil)
-  (setq doom-modeline-minor-modes t)
-  (setq nerd-icons-scale-factor 1.2)
+  (setq doom-modeline-buffer-file-name-style 'file-name-with-project
+	doom-modeline-height 25
+	doom-modeline-minor-modes t
+	nerd-icons-scale-factor 1.2)
   
   (unless (display-graphic-p (selected-frame))
-    (setq doom-modeline-major-mode-icon nil)
-    (setq doom-modeline-vcs-icon nil))
+    (setq doom-modeline-major-mode-icon nil
+	  doom-modeline-vcs-icon nil))
   
   (doom-modeline-mode 1))
+
+(doom-modeline-def-modeline 'main
+  '(bar workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
+  '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode))
 
 ;; internal emacs changes
 (add-to-list 'load-path (file-in-emacs-directory "modules"))
@@ -172,16 +212,22 @@
       make-backup-files nil
       auto-save-default nil
       use-package-always-ensure t
-      warning-suppress-log-types '((files missing-lexbind-cookie)))
+      warning-suppress-log-types '((files missing-lexbind-cookie))
+      compilation-auto-jump-to-first-error t
+      compilation-max-output-line-length nil
+      compilation-scroll-output t)
 (load custom-file)
 
 (add-hook
  'org-mode-hook
- (lambda ()
+ #'(lambda ()
    (setq org-latex-create-formula-image-program 'imagemagick)))
 
 (when (eq system-type 'darwin)
-  (add-directory-to-exec-path "/Library/TeX/texbin"))
+  (add-directory-to-exec-path "/Library/TeX/texbin")
+  (add-hook
+   'Info-mode-hook
+   #'(lambda () (setq Info-additional-directory-list "/opt/homebrew/share/info/emacs"))))
 
 ;;; Package configuration
 (use-package proced
@@ -227,6 +273,11 @@
   (dolist (extension '(".pyc" ".elc"))
     (add-to-list 'completion-ignored-extensions extension)))
 
+(use-package calc
+  :ensure nil
+  :config
+  (require 'calc-rref))
+
 (use-package smex
   :bind (("M-x" . smex)
 	 ("M-X" . smex-major-mode-commands)
@@ -236,7 +287,7 @@
 		lua-mode-hook
 		python-mode-hook
 		java-mode-hook))
-  (add-hook hook 'eglot-ensure))
+  (add-hook hook #'eglot-ensure))
 
 (use-package maxima
   :mode ("\\.mac\\'" . maxima-mode)
@@ -246,6 +297,10 @@
   :ensure nil
   :if (locate-library "imaxima.el"))
 
+(use-package cobol-mode
+  :mode (("\\.cbl\\'" . cobol-mode)
+	 ("\\.cob\\'" . cobol-mode)))
+
 (use-package intercal-mode
   :ensure nil
   :load-path "modes/intercal/"
@@ -254,4 +309,3 @@
 (use-package my-present
   :ensure nil
   :load-path "modules/")
-

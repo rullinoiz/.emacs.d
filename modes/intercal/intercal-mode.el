@@ -81,13 +81,12 @@
 (defun intercal-mode-find-label-definition (label)
   "Find the label's definiton in the source."
   (interactive "nLabel: "))
-  
 
 ;;;###autoload
 (define-derived-mode intercal-mode prog-mode "INTERCAL"
   "Major mode for INTERCAL"
-  (setq font-lock-defaults '(intercal-mode-font-lock-keywords))
-  (setq font-lock-string-face nil)
+  (setq font-lock-defaults '(intercal-mode-font-lock-keywords)
+	font-lock-string-face nil)
   :custom 'intercal-mode)
 
 ;;;###autoload
