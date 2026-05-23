@@ -182,22 +182,19 @@
 		compilation-mode-hook))
   (add-hook hook #'display-line-numbers-mode-off))
 
-(add-hook
- 'window-setup-hook
- #'(lambda ()
-   (when (display-graphic-p (selected-frame))
-     (tool-bar-mode -1))))
-
 (use-package doom-modeline
   :init
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project
-	doom-modeline-height 25
+	doom-modeline-height 10
 	doom-modeline-minor-modes t
 	nerd-icons-scale-factor 1.2)
-  
-  (unless (display-graphic-p (selected-frame))
-    (setq doom-modeline-major-mode-icon nil
-	  doom-modeline-vcs-icon nil))
+
+  (add-to-list
+   'after-make-frame-functions
+   (lambda (frame)
+     (unless (display-graphic-p frame)
+       (setq doom-modeline-major-mode-icon nil
+	     doom-modeline-vcs-icon nil))))
   
   (doom-modeline-mode 1))
 
