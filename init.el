@@ -4,6 +4,18 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
 
+;;; must be above all org definitions
+(use-package org
+  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
+  :load-path "~/.emacs.d/elpa/org-mode/lisp/"
+  :config (setq org-list-allow-alphabetical t
+		org-highlight-latex-and-related '(latex script entities)
+		org-latex-preview-preamble "\\documentclass{article}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{xcolor}
+\\usepackage{amssymb}"))
+
 ;;; Functions
 (defun get-environment-variables ()
   "Get a list of all defined environment variables."
@@ -140,6 +152,11 @@
   (interactive (eval (nth 1 (interactive-form #'file-in-emacs-directory))))
   (find-file file-path))
 
+(defun open-college-directory ()
+  "Opens college directory with dired."
+  (interactive)
+  (dired "~/Documents/school/College"))
+
 ;;; Keymap
 (dolist (bind #'(("C-c o i" . open-init-file)
 		("C-c C-o i" . open-init-file-other-window)
@@ -152,6 +169,7 @@
 		("C-c o l" . find-library)
 		("C-c C-o l" . find-library-other-window)
 		("C-c o C-f" . open-file-in-emacs-directory)
+		("C-c o s" . open-college-directory)
 		("<escape>" . keyboard-escape-quit)
 		("M-RET" . toggle-frame-fullscreen)))
   (global-set-key (kbd (car bind)) (cdr bind)))
@@ -171,36 +189,53 @@
 	    (set-frame-parameter frame 'alpha-background 100))
 	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :linux 80 :windows 80)))))))
 
-(add-hook
- 'prog-mode-hook
- #'display-line-numbers-mode)
+(add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
 (defun display-line-numbers-mode-off () (display-line-numbers-mode 0))
 
 (dolist (hook '(help-mode-hook
 		dired-mode-hook
-		compilation-mode-hook))
+		compilation-mode-hook
+		ghostel-mode-hook
+		shell-mode-hook))
   (add-hook hook #'display-line-numbers-mode-off))
 
+(defun --modeline-icons (&optional frame)
+  (let ((graphic (display-graphic-p frame)))
+    (setq doom-modeline-major-mode-icon graphic
+	  doom-modeline-vcs-icon graphic)))
+
 (use-package doom-modeline
+  :ensure t
   :init
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project
-	doom-modeline-height 10
+	doom-modeline-height 20
 	doom-modeline-minor-modes t
 	nerd-icons-scale-factor 1.2)
 
-  (add-to-list
-   'after-make-frame-functions
-   (lambda (frame)
-     (unless (display-graphic-p frame)
-       (setq doom-modeline-major-mode-icon nil
-	     doom-modeline-vcs-icon nil))))
+  (add-hook 'after-init-hook #'--modeline-icons)
+  (add-to-list 'after-make-frame-functions #'--modeline-icons)
   
   (doom-modeline-mode 1))
 
 (doom-modeline-def-modeline 'main
   '(bar workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
   '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode))
+
+(add-to-list
+ 'after-make-frame-functions
+ (lambda (frame)
+   (--remove-background frame)
+   (when (display-graphic-p frame)
+     (scroll-bar-mode -1)
+     (tool-bar-mode -1))))
+
+(add-hook
+ 'after-init-hook
+ (lambda ()
+   (when (display-graphic-p (selected-frame))
+     (scroll-bar-mode -1)
+     (tool-bar-mode -1))))
 
 ;; internal emacs changes
 (add-to-list 'load-path (file-in-emacs-directory "modules"))
@@ -212,16 +247,14 @@
       warning-suppress-log-types '((files missing-lexbind-cookie))
       compilation-auto-jump-to-first-error t
       compilation-max-output-line-length nil
-      compilation-scroll-output t)
-(load custom-file)
-
-(add-hook
- 'org-mode-hook
- #'(lambda ()
-   (setq org-latex-create-formula-image-program 'imagemagick)))
+      compilation-scroll-output t
+      load-prefer-newer t
+      ring-bell-function 'ignore
+      use-short-answers t
+      mouse-autoselect-window t)
+(load-file custom-file)
 
 (when (eq system-type 'darwin)
-  (add-directory-to-exec-path "/Library/TeX/texbin")
   (add-hook
    'Info-mode-hook
    #'(lambda () (setq Info-additional-directory-list "/opt/homebrew/share/info/emacs"))))
@@ -241,16 +274,24 @@
   :init (global-git-gutter-mode))
 
 ;; dired git
-(use-package dired
-  :ensure nil
-  :commands (dired-git-info-mode)
+(use-package dired-git-info
   :bind (:map dired-mode-map
 	      (")" . dired-git-info-mode))
+  :config (setq dgi-auto-hide-details-p nil))
+
+(use-package dired
+  :ensure nil
   :config
-  (setq dgi-auto-hide-details-p nil)
   (when (eq system-type 'darwin)
     (setq dired-use-ls-dired t
 	  insert-directory-program "/opt/homebrew/bin/gls")))
+
+(use-package dired-omit
+  :ensure nil
+  :hook (dired-mode . dired-omit-mode)
+  :init
+  (setq-default dired-omit-files-p t)
+  (setq dired-omit-files "^\\.DS_Store\\|\\.tex$"))
 
 (use-package simpc-mode
   :ensure nil
@@ -260,25 +301,10 @@
 (use-package company-quickhelp
   :init (company-quickhelp-mode 1))
 
-(use-package ido
-  :ensure nil
-  :init
-  (ido-mode 1)
-  (setq ido-everywhere t)
-  (setq ido-ignore-extensions t)
-  (setq ido-ignore-files '(".DS_Store" ".git"))
-  (dolist (extension '(".pyc" ".elc"))
-    (add-to-list 'completion-ignored-extensions extension)))
-
 (use-package calc
   :ensure nil
   :config
   (require 'calc-rref))
-
-(use-package smex
-  :bind (("M-x" . smex)
-	 ("M-X" . smex-major-mode-commands)
-	 ("C-c C-c M-x" . execute-extended-command)))
 
 (dolist (hook '(c-mode-hook
 		lua-mode-hook
@@ -286,13 +312,7 @@
 		java-mode-hook))
   (add-hook hook #'eglot-ensure))
 
-(use-package maxima
-  :mode ("\\.mac\\'" . maxima-mode)
-  :interpreter ("maxima" . maxima-mode))
-
-(use-package imaxima
-  :ensure nil
-  :if (locate-library "imaxima.el"))
+(use-package casual)
 
 (use-package cobol-mode
   :mode (("\\.cbl\\'" . cobol-mode)
@@ -303,6 +323,81 @@
   :load-path "modes/intercal/"
   :mode "\\.i[0-9]*\\'")
 
+(use-package conf-mode)
+
+(use-package nginx-mode)
+
+(use-package systemd)
+
+(use-package cmake-mode)
+
+(use-package kotlin-mode)
+
+(use-package lua-mode
+  :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
+		lua-indent-level 4))
+
+(use-package php-mode)			 
+
+(use-package transpose-frame
+  :bind (("C-x 4 t" . transpose-frame)))
+
+(use-package sudo-edit
+  :bind (("C-c C-r" . sudo-edit)))
+
 (use-package my-present
   :ensure nil
   :load-path "modules/")
+
+(use-package emacs
+  :custom
+  (context-menu-mode t)
+  (enable-recursive-minibuffers t)
+  (read-extended-command-predicate #'command-completion-default-include-p)
+  (minibuffer-prompt-properties
+   '(read-only t cursor-intangible t face minibuffer-prompt)))
+
+(use-package vertico
+  :init (vertico-mode))
+
+(use-package vertico-buffer
+  :ensure nil
+  :after vertico
+  :config (setq vertico-buffer-display-action '(display-buffer-in-side-window
+						(side . nil)
+						(window-parameters (no-other-window . t)))))
+
+(use-package vertico-posframe
+  :after vertico
+  :custom (vertico-posframe-parameters
+	   '((left-fringe . 8)
+	     (right-fringe . 8)))
+  :init (vertico-posframe-mode 1))
+
+(use-package vertico-mouse
+  :ensure nil
+  :init (vertico-mouse-mode 1))
+
+(use-package multiple-cursors
+  :init (multiple-cursors-mode))
+
+(use-package ghostel)
+
+(use-package org-latex-preview
+  :ensure nil
+  :hook (org-mode . org-latex-preview-mode)
+  :config
+  (plist-put org-latex-preview-appearance-options
+	     :page-width 0.8)
+
+  (setq org-latex-preview-mode-display-live t
+	org-latex-preview-mode-update-delay 0
+	org-latex-preview-cache 'temp))
+
+(use-package cdlatex
+  :hook (org-mode . turn-on-org-cdlatex)
+  :config
+  (add-to-list 'cdlatex-env-alist
+	       '("equation"
+		 "\\begin{equation}\n?\n\\end{equation}"
+		 nil)))
