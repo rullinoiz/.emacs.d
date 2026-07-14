@@ -5,13 +5,19 @@
 (package-initialize)
 
 ;;; must be above all org definitions
-(use-package org
+(use-package org-mode
   :ensure t
-  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
+  :defer t
+  :no-require t
+  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev"))
+
+(use-package org
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
-  :config (setq org-list-allow-alphabetical t
-		org-highlight-latex-and-related '(latex script entities)
-		org-latex-preview-preamble "\\documentclass{article}
+  :hook ((org-mode . visual-line-mode)
+         (org-mode . display-line-numbers-mode))
+  :init (setq org-list-allow-alphabetical t
+	      org-highlight-latex-and-related '(latex script entities)
+	      org-latex-preview-preamble "\\documentclass{article}
 [DEFAULT-PACKAGES]
 [PACKAGES]
 \\usepackage{xcolor}
@@ -53,7 +59,7 @@
   (when (called-interactively-p 'any)
     (message "%s" relative-path))
   
-  (concat user-emacs-directory relative-path))
+  (expand-file-name relative-path user-emacs-directory))
 
 (defun add-directory-to-exec-path (path)
   "Add a directory to the PATH environment variable."
@@ -180,8 +186,6 @@
  (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
 
 ;;; Theme
-(add-hook 'org-mode-hook 'visual-line-mode)
-
 (add-hook
  'window-size-change-functions
  #'(lambda (frame)
@@ -253,7 +257,7 @@
       ring-bell-function 'ignore
       use-short-answers t
       mouse-autoselect-window t)
-(load-file custom-file)
+(load custom-file 'noerror 'nomessage)
 
 (when (eq system-type 'darwin)
   (add-hook
@@ -335,12 +339,14 @@
 (use-package kotlin-mode)
 
 (use-package lua-mode
+  :defer t
   :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
 		lua-indent-level 4))
 
 (use-package php-mode)			 
 
 (use-package transpose-frame
+  :defer t
   :bind (("C-x 4 t" . transpose-frame)))
 
 (use-package sudo-edit
@@ -348,6 +354,7 @@
 
 (use-package my-present
   :ensure nil
+  :defer t
   :load-path "modules/")
 
 (use-package emacs
@@ -382,10 +389,15 @@
 (use-package multiple-cursors
   :init (multiple-cursors-mode))
 
-(use-package ghostel)
+(use-package ghostel
+  :defer t)
+
+(use-package auctex
+  :defer t)
 
 (use-package org-latex-preview
   :ensure nil
+  :defer t
   :hook (org-mode . org-latex-preview-mode)
   :config
   (plist-put org-latex-preview-appearance-options

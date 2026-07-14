@@ -11,10 +11,10 @@
   (text-scale-mode 1)
   (olivetti-mode 1)
   (setq-local face-remapping-alist '((default variable-pitch default)))
-  (setq text-scale-mode-amount 4)
-  (setq org-hide-emphasis-markers t)
-  (setq cursor-type nil)
-  (setq olivetti-minimum-body-width 100)
+  (setq text-scale-mode-amount 4
+	org-hide-emphasis-markers t
+	cursor-type nil
+	olivetti-minimum-body-width 100)
   (set-face-attribute 'org-meta-line nil :foreground (face-attribute 'default :background))
   (font-lock-flush))
 
@@ -25,8 +25,8 @@
   (hide-mode-line-mode 0)
   (olivetti-mode 0)
   (setq-local face-remapping-alist '())
-  (setq org-hide-emphasis-markers nil)
-  (setq cursor-type 'box)
+  (setq org-hide-emphasis-markers nil
+	cursor-type 'box)
   (org-show-all)
   (set-face-attribute 'org-meta-line nil :foreground nil)
   (font-lock-flush))
@@ -61,8 +61,8 @@
          (org-tree-slide-stop . my/presentation-end))
   :custom
   (org-tree-slide-slide-in-effect nil)
-  (org-tree-slide-activate-message "Begin presentation")
-  (org-tree-slide-deactivate-message "End presentation")
+  (org-tree-slide-activate-message "Swag mode ON")
+  (org-tree-slide-deactivate-message "Swag mode OFF")
   (org-tree-slide-header t)
   (org-tree-slide-breadcrumbs " > "))
 
