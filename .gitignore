@@ -1,6 +1,8 @@
 .DS_Store
 .dap-breakpoints
 ede-projects.el
+projects.eld
+custom.el
 ido.last
 smex-items
 tramp
@@ -15,3 +17,4 @@ eln-cache/
 elpa/
 xkcd/
 eshell/
+transient/
