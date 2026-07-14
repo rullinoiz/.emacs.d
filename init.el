@@ -6,6 +6,7 @@
 
 ;;; must be above all org definitions
 (use-package org
+  :ensure t
   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev")
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
   :config (setq org-list-allow-alphabetical t
