@@ -13,6 +13,8 @@
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
 
+(add-to-list 'load-path "~/.emacs.d/modules")
+
 (defun --remove-background (&optional frame)
   (or frame (setq frame (selected-frame)))
   (unless (display-graphic-p frame)

@@ -14,7 +14,8 @@
 (use-package org
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
   :hook ((org-mode . visual-line-mode)
-         (org-mode . display-line-numbers-mode))
+         (org-mode . display-line-numbers-mode)
+	 (org-mode . org-latex-preview))
   :init (setq org-list-allow-alphabetical t
 	      org-highlight-latex-and-related '(latex script entities)
 	      org-latex-preview-preamble "\\documentclass{article}
@@ -53,13 +54,15 @@
       (message "%s" newenv))))
 
 (defun file-in-emacs-directory (relative-path)
-  "Get the path of a file inside of the `user-emacs-directory'."
+  "Get the full path of a file inside of the `user-emacs-directory'."
   (interactive (list (read-file-name "File: " user-emacs-directory nil nil nil)))
+
+  (setq relative-path (expand-file-name relative-path user-emacs-directory))
 
   (when (called-interactively-p 'any)
     (message "%s" relative-path))
   
-  (expand-file-name relative-path user-emacs-directory))
+  relative-path)
 
 (defun add-directory-to-exec-path (path)
   "Add a directory to the PATH environment variable."
@@ -67,11 +70,12 @@
   (add-to-list 'exec-path path)
   (prepend-env "PATH" path))
 
-(cl-defmacro os-switch (&key darwin windows linux)
+(cl-defmacro os-switch (&key darwin windows linux else)
   "Perform a different operation depending on the host OS."
-  `(cond ((eq system-type 'darwin) (progn ,darwin))
-	((eq system-type 'windows-nt) (progn ,windows))
-	((eq system-type 'gnu/linux) (progn ,linux))))
+  `(cond ((and ,darwin (eq system-type 'darwin)) (progn ,darwin))
+	 ((and ,windows (eq system-type 'windows-nt)) (progn ,windows))
+	 ((and ,linux (eq system-type 'gnu/linux)) (progn ,linux))
+	 (t (progn ,else))))
 
 (defun eval-region-and-kill ()
   "Evaluate the region and kill the result."
@@ -160,9 +164,14 @@
   (find-file file-path))
 
 (defun open-college-directory ()
-  "Opens college directory with dired."
+  "Open college directory with dired."
   (interactive)
   (dired "~/Documents/school/College"))
+
+(defun crontab-e ()
+  "Run `crontab -e` in an emacs buffer."
+  (interactive)
+  (with-editor-async-shell-command "crontab -e"))
 
 ;;; Keymap
 (dolist (bind #'(("C-c o i" . open-init-file)
@@ -179,20 +188,22 @@
 		("C-c o s" . open-college-directory)
 		("<escape>" . keyboard-escape-quit)
 		("M-RET" . toggle-frame-fullscreen)))
-  (global-set-key (kbd (car bind)) (cdr bind)))
+  (bind-key (car bind) (cdr bind)))
 
 (with-eval-after-load
  'lisp-mode
  (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
 
 ;;; Theme
+(setq-default cursor-type 'bar)
+
 (add-hook
  'window-size-change-functions
  #'(lambda (frame)
    (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
      (cond ((memq fullscreen-state '(fullboth fullscreen))
 	    (set-frame-parameter frame 'alpha-background 100))
-	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :linux 80 :windows 80)))))))
+	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :else 80)))))))
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
@@ -205,27 +216,32 @@
 		shell-mode-hook))
   (add-hook hook #'display-line-numbers-mode-off))
 
-(defun --modeline-icons (&optional frame)
-  (let ((graphic (display-graphic-p frame)))
-    (setq doom-modeline-major-mode-icon graphic
-	  doom-modeline-vcs-icon graphic)))
+(use-package hl-line
+  :init
+  (global-hl-line-mode 1)
+  :config
+  (set-face-background 'hl-line "#151515"))
 
 (use-package doom-modeline
-  :ensure t
+  :preface
+  (defun my/doom-modeline-icons (&optional frame)
+    (let ((graphic (display-graphic-p frame)))
+      (setq doom-modeline-major-mode-icon graphic
+	    doom-modeline-vcs-icon graphic)))
   :init
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project
 	doom-modeline-height 20
 	doom-modeline-minor-modes t
 	nerd-icons-scale-factor 1.2)
 
-  (add-hook 'after-init-hook #'--modeline-icons)
-  (add-to-list 'after-make-frame-functions #'--modeline-icons)
+  (add-hook 'after-init-hook #'my/doom-modeline-icons)
+  (add-to-list 'after-make-frame-functions #'my/doom-modeline-icons)
   
-  (doom-modeline-mode 1))
-
-(doom-modeline-def-modeline 'main
-  '(bar workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
-  '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode))
+  (doom-modeline-mode 1)
+  :config
+  (doom-modeline-def-modeline 'main
+    '(bar workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
+    '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode)))
 
 (add-to-list
  'after-make-frame-functions
@@ -243,8 +259,6 @@
      (tool-bar-mode -1))))
 
 ;; internal emacs changes
-(add-to-list 'load-path (file-in-emacs-directory "modules"))
-
 (setq custom-file (file-in-emacs-directory "custom.el")
       make-backup-files nil
       auto-save-default nil
@@ -271,9 +285,9 @@
   :hook ((proced-mode . proced-toggle-auto-update)))
 
 (use-package company
-  :init
-  (setq company-files-exclusions '(".git/" ".DS_Store"))
-  (global-company-mode))
+  :hook (prog-mode . company-mode)
+  :config
+  (setq company-files-exclusions '(".git/" ".DS_Store")))
 
 (use-package git-gutter
   :init (global-git-gutter-mode))
@@ -311,11 +325,19 @@
   :config
   (require 'calc-rref))
 
-(dolist (hook '(c-mode-hook
-		lua-mode-hook
-		python-mode-hook
-		java-mode-hook))
-  (add-hook hook #'eglot-ensure))
+(use-package eglot
+  :defer t
+  :hook ((c-mode . eglot-ensure)
+	 (lua-mode . eglot-ensure)
+	 (python-mode . eglot-ensure)
+	 (java-mode . eglot-ensure)
+	 (kotlin-mode . eglot-ensure)
+	 (v-mode . eglot-ensure))
+  :config
+  (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
+  (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
+  (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
+  (setq eglot-connect-timeout 120))
 
 (use-package casual)
 
@@ -365,26 +387,41 @@
   (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt)))
 
+(use-package orderless
+  :config
+  (setq orderless-matching-styles '(orderless-flex))
+  :custom
+  (completion-styles '(basic flex))
+  (completion-category-overrides '((file (styles partial-completion))))
+  (completion-category-defaults nil)
+  (completion-pcm-leading-wildcard t))
+
 (use-package vertico
-  :init (vertico-mode))
+  :init
+  (vertico-mode)
+  (vertico-mouse-mode 1)
+  (vertico-indexed-mode 1))
 
-(use-package vertico-buffer
-  :ensure nil
-  :after vertico
-  :config (setq vertico-buffer-display-action '(display-buffer-in-side-window
-						(side . nil)
-						(window-parameters (no-other-window . t)))))
+;; (use-package vertico-buffer
+;;   :ensure nil
+;;   :after vertico
+;;   :config (setq vertico-buffer-display-action '(display-buffer-in-side-window
+;; 						(side . nil)
+;; 						(window-parameters (no-other-window . t)))))
 
-(use-package vertico-posframe
-  :after vertico
-  :custom (vertico-posframe-parameters
-	   '((left-fringe . 8)
-	     (right-fringe . 8)))
-  :init (vertico-posframe-mode 1))
+(use-package marginalia
+  :init (marginalia-mode)
+  :config
+  (setq marginalia-align 'right
+	marginalia-align-offset 0
+	marginalia-max-relative-age 0))
 
-(use-package vertico-mouse
-  :ensure nil
-  :init (vertico-mouse-mode 1))
+;; (use-package vertico-posframe
+;;   :after vertico
+;;   :custom (vertico-posframe-parameters
+;; 	   '((left-fringe . 8)
+;; 	     (right-fringe . 8)))
+;;   :init (vertico-posframe-mode 1))
 
 (use-package multiple-cursors
   :init (multiple-cursors-mode))
@@ -408,9 +445,78 @@
 	org-latex-preview-cache 'temp))
 
 (use-package cdlatex
+  :defer t
+  :preface
+  (defun my/cdlatex-insert-dollar-pair (&optional p)
+    (interactive "P")
+    (if p
+	(insert-char ?$)
+      (atomic-change-group
+	(insert "\\(  \\)")
+	(backward-char 3))))
+  :bind* (:map org-mode-map
+	       ("$" . my/cdlatex-insert-dollar-pair))
   :hook (org-mode . turn-on-org-cdlatex)
   :config
   (add-to-list 'cdlatex-env-alist
-	       '("equation"
-		 "\\begin{equation}\n?\n\\end{equation}"
+	       '("equation*"
+		 "\\begin{equation*}
+?
+\\end{equation*}"
 		 nil)))
+
+(use-package smartparens
+  :defer t
+  :preface
+  (defun my/smartparens-mode-setup ()
+    (smartparens-mode)
+    (dolist (pair '(("\\(" . "\\)")
+		    ("\\[" . "\\]")))
+      (sp-local-pair 'org-mode (car pair) (cdr pair) :actions '(insert))))
+  :hook (org-mode . my/smartparens-mode-setup))
+
+(use-package popper)
+
+(use-package gptel
+  :defer t
+  :hook (gptel-mode . display-line-numbers-mode-off)
+  :custom
+  (gptel-directives
+   '((default . "You are a helpful assistant living in Emacs. Provide concise answers and explain everything. Rely on the documentation tools provided rather than your knowledge.")))
+  :config
+  (setq gptel-model 'gemma4:granite4.1:8b
+	gptel-backend (gptel-make-ollama "Ollama (remote)"
+			:host "10.0.0.31:11434"
+			:stream t
+			:models '("gemma4:26b-agent"
+				  "gemma4:12b"
+				  "granite4.1:8b"
+				  "mathstral:7b"))
+	gptel-default-mode 'org-mode
+	gptel-stream t)
+  
+  (gptel-make-ollama "Ollama (local)"
+    :stream t
+    :models '("gemma4:12b-mlx"
+	      "deepseek-r1:latest"
+	      "granite4.1:8b"
+	      "mathstral:7b"))
+
+  (gptel-make-preset 'latex
+    :system "You are an AI assistant inside of Emacs helping with mathematics written mainly inline LaTeX in Org mode. If given a single problem, simply provide the answer and nothing else unless the problem asks for it. If given multiple questions, number your answers for each problem answered, and simply provide the answers and nothing else unless the problems ask for it. Be aware of any surrounding or open LaTeX formatting. Do not repeat the prompt or question.
+
+*Example prompt*: If \\(U=\\left\\{1,2,3,\\dots,10\\right\\}\\), \\(U \\cup \\left\\{11,12\\right\\} =
+
+*Your response*: \\left\\{1,2,3,4,5,6,7,8,9,10,11,12\\right\\}\\)"
+    :models '("gemma4:12b-mlx" "granite4.1:8b")))
+
+(use-package ragmacs
+  :vc (:url "https://github.com/positron-solutions/ragmacs.git")
+  :after gptel)
+
+(use-package crontab-mode
+  :defer t)
+
+(use-package with-editor
+  :defer t)
+
