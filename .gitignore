@@ -1,13 +1,15 @@
 .DS_Store
 .dap-breakpoints
 ede-projects.el
-projects.eld
+*.eld
 custom.el
 ido.last
 smex-items
 tramp
 *-autoloads.el
 *.elc
+.mc-lists.el
+.org-id-locations
 
 .cache/
 auto-save-list/
@@ -18,3 +20,4 @@ elpa/
 xkcd/
 eshell/
 transient/
+tree-sitter/
