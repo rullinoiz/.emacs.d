@@ -4,3 +4,6 @@
 [submodule "modes/org-present"]
 	path = modes/org-present
 	url = https://github.com/rlister/org-present.git
+[submodule "modes/v-mode"]
+	path = modes/v-mode
+	url = https://github.com/rullinoiz/v-mode.git
