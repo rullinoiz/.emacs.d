@@ -6,9 +6,9 @@
 (setq inhibit-startup-screen t)
 
 ;;; transparent window
-(set-frame-parameter (selected-frame) 'alpha-background 60)
-;;(add-to-list 'default-frame-alist '(undecorated-round . t))
-(add-to-list 'default-frame-alist '(alpha-background . 60))
+;;(set-frame-parameter (selected-frame) 'alpha-background 60)
+;;(add-to-list 'default-frame-alist '(alpha-background . 60))
+
 (add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
 
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
@@ -21,7 +21,7 @@
     (set-face-attribute 'default frame :background "#00000000")))
 
 (defun --load-theme ()
-  (load-theme 'even-deeper-blue t)
+  (load-theme 'gradianto-midnight-blue t)
   (--remove-background (selected-frame)))
 
 (--load-theme)

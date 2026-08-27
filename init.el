@@ -191,19 +191,23 @@
   (bind-key (car bind) (cdr bind)))
 
 (with-eval-after-load
- 'lisp-mode
- (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
+    'lisp-mode
+  (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
+
+(with-eval-after-load
+    'prog-mode
+  (define-key prog-mode-map (kbd "C-c C-c") #'ghostel-compile))
 
 ;;; Theme
 (setq-default cursor-type 'bar)
 
-(add-hook
- 'window-size-change-functions
- #'(lambda (frame)
-   (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
-     (cond ((memq fullscreen-state '(fullboth fullscreen))
-	    (set-frame-parameter frame 'alpha-background 100))
-	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :else 80)))))))
+;;(add-hook
+;; 'window-size-change-functions
+;; #'(lambda (frame)
+;;   (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
+;;     (cond ((memq fullscreen-state '(fullboth fullscreen))
+;;	    (set-frame-parameter frame 'alpha-background 100))
+;;	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :else 80)))))))
 
 (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
@@ -218,9 +222,7 @@
 
 (use-package hl-line
   :init
-  (global-hl-line-mode 1)
-  :config
-  (set-face-background 'hl-line "#151515"))
+  (global-hl-line-mode 1))
 
 (use-package doom-modeline
   :preface
@@ -332,7 +334,8 @@
 	 (python-mode . eglot-ensure)
 	 (java-mode . eglot-ensure)
 	 (kotlin-mode . eglot-ensure)
-	 (v-mode . eglot-ensure))
+	 ;;(v-mode . eglot-ensure)
+	 )
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
