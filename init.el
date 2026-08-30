@@ -224,6 +224,13 @@
   :init
   (global-hl-line-mode 1))
 
+(use-package nerd-icons
+  :config
+  (add-to-list 'nerd-icons-mode-icon-alist
+	       '(v-mode nerd-icons-sucicon "nf-custom-v_lang" :face nerd-icons-cyan))
+  (add-to-list 'nerd-icons-extension-icon-alist
+	       '("v" nerd-icons-sucicon "nf-custom-v_lang" :face nerd-icons-cyan)))
+
 (use-package doom-modeline
   :preface
   (defun my/doom-modeline-icons (&optional frame)
@@ -234,6 +241,8 @@
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project
 	doom-modeline-height 20
 	doom-modeline-minor-modes t
+	doom-modeline-major-mode-icon t
+	doom-modeline-major-mode-color-icon t
 	nerd-icons-scale-factor 1.2)
 
   (add-hook 'after-init-hook #'my/doom-modeline-icons)
@@ -312,11 +321,10 @@
   :hook (dired-mode . dired-omit-mode)
   :init
   (setq-default dired-omit-files-p t)
-  (setq dired-omit-files "^\\.DS_Store\\|\\.tex$"))
+  (setq dired-omit-files "^\\.DS_Store\\|\\.tex|\\.#$"))
 
 (use-package simpc-mode
-  :ensure nil
-  :load-path "modes/simpc-mode/"
+  :vc (:url "https://github.com/rullinoiz/simpc-mode.git" :rev :newest)
   :mode "\\.[hc]\\(pp\\)?\\'")
 
 (use-package company-quickhelp
@@ -329,12 +337,12 @@
 
 (use-package eglot
   :defer t
-  :hook ((c-mode . eglot-ensure)
+  :hook ((simpc-mode . eglot-ensure)
 	 (lua-mode . eglot-ensure)
 	 (python-mode . eglot-ensure)
 	 (java-mode . eglot-ensure)
 	 (kotlin-mode . eglot-ensure)
-	 ;;(v-mode . eglot-ensure)
+	 (v-mode . eglot-ensure)
 	 )
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
@@ -368,7 +376,10 @@
   :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
 		lua-indent-level 4))
 
-(use-package php-mode)			 
+(use-package php-mode)
+
+(use-package v-mode
+  :vc (:url "https://github.com/rullinoiz/v-mode.git" :rev :newest))
 
 (use-package transpose-frame
   :defer t
