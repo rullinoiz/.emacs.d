@@ -37,8 +37,10 @@
  '(font-lock-type-face ((t (:foreground "#757db3"))))
  '(font-lock-doc-face ((t (:style bold))))
  '(font-lock-warning-face ((t (:foreground "#bc3f3c"))))
+ '(font-lock-preprocessor-face ((t (:foreground "#CBBC3A"))))
 
- 
+ '(eglot-semantic-number ((t (:inherit font-lock-number-face))))
+ '(eglot-highlight-symbol-face ((t (:background "#283551"))))
 
  )
 
