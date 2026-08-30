@@ -29,7 +29,8 @@
   "Get a list of all defined environment variables."
   (mapcar #'(lambda (str)
 	      (string-match "\\([a-zA-Z0-9_]+\\)=." str)
-	      (match-string 1 str)) process-environment))
+	      (match-string 1 str))
+	  process-environment))
 
 (defun --prompt-env ()
   "Prompt the user for an environment variable."
@@ -107,7 +108,7 @@
 (defun my/goto-functions ()
   "Internal function to jump to the function header in the init file."
   (interactive)
-  (goto-line 1)
+  (goto-char (min-point))
   (re-search-forward "^;;; Functions"))
 
 (defun open-func-file ()
@@ -125,7 +126,7 @@
 (defun my/goto-theme ()
   "Internal function to jump to the theme header in the init file."
   (interactive)
-  (goto-line 1)
+  (goto-char (min-point))
   (re-search-forward "^;;; Theme"))
 
 (defun open-theme-file ()
@@ -143,7 +144,7 @@
 (defun my/goto-keymap ()
   "Internal function to jump to the keymap header in the init file."
   (interactive)
-  (goto-line 1)
+  (goto-char (min-point))
   (re-search-forward "^;;; Keymap"))
 
 (defun open-keymap-file ()
@@ -172,6 +173,29 @@
   "Run `crontab -e` in an emacs buffer."
   (interactive)
   (with-editor-async-shell-command "crontab -e"))
+
+(defun my/get-regexp-matches-in-file (r filepath group-num)
+  "Returns a list of matches in FILEPATH with regexp R."
+  (setq group-num (or group-num 0))
+  (with-temp-buffer
+    (insert-file-contents filepath)
+    (goto-char (point-min))
+    (let (matches)
+      (while (re-search-forward r nil t)
+	(when (match-string group-num)
+	  (push (match-string group-num) matches)))
+      (nreverse matches))))
+
+(defun use-package-configure (package)
+  "Find the \\[use-package] definition for PACKAGE in `user-init-file'."
+  (interactive (list
+		(completing-read
+		 "Package: " 
+		 (my/get-regexp-matches-in-file "^ *[^;](use-package \\([^()\n]+\\))?" user-init-file 1)
+		 nil t)))
+  (open-init-file)
+  (goto-char (point-min))
+  (re-search-forward (concat "^ *[^;](use-package *\\(" package "\\)")))
 
 ;;; Keymap
 (dolist (bind #'(("C-c o i" . open-init-file)
@@ -321,7 +345,7 @@
   :hook (dired-mode . dired-omit-mode)
   :init
   (setq-default dired-omit-files-p t)
-  (setq dired-omit-files "^\\.DS_Store\\|\\.tex|\\.#$"))
+  (setq dired-omit-files "^\\.DS_Store\\|\\.tex$\\|\\.#"))
 
 (use-package simpc-mode
   :vc (:url "https://github.com/rullinoiz/simpc-mode.git" :rev :newest)
