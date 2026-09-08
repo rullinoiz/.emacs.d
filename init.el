@@ -1,5 +1,8 @@
 ;;; -*- lexical-binding: t -*-
 
+;; (benchmark-init/activate)
+;; (add-hook 'after-init-hook #'benchmark-init/deactivate)
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -13,6 +16,7 @@
 
 (use-package org
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
+  :defer t
   :hook ((org-mode . visual-line-mode)
          (org-mode . display-line-numbers-mode)
 	 (org-mode . org-latex-preview))
@@ -25,202 +29,36 @@
 \\usepackage{amssymb}"))
 
 ;;; Functions
-(defun get-environment-variables ()
-  "Get a list of all defined environment variables."
-  (mapcar #'(lambda (str)
-	      (string-match "\\([a-zA-Z0-9_]+\\)=." str)
-	      (match-string 1 str))
-	  process-environment))
-
-(defun --prompt-env ()
-  "Prompt the user for an environment variable."
-  (completing-read "Environment variable: " (get-environment-variables) nil nil))
-
-(defun prepend-env (variable value)
-  "Prepend some value to an environment variable."
-  (interactive (list (--prompt-env)
-		     (read-string "Value to prepend: ")))
-  (let ((newenv (concat value ":" (getenv variable))))
-    (setenv variable newenv)
-    (when (called-interactively-p 'any)
-      (message "%s" newenv))))
-
-(defun append-env (variable value)
-  "Append some value to an environment variable."
-  (interactive (list (--prompt-env)
-		     (read-string "Value to append: ")))
-  (let ((newenv (concat (getenv variable) ":" value)))
-    (setenv variable newenv)
-    (when (called-interactively-p 'any)
-      (message "%s" newenv))))
-
-(defun file-in-emacs-directory (relative-path)
-  "Get the full path of a file inside of the `user-emacs-directory'."
-  (interactive (list (read-file-name "File: " user-emacs-directory nil nil nil)))
-
-  (setq relative-path (expand-file-name relative-path user-emacs-directory))
-
-  (when (called-interactively-p 'any)
-    (message "%s" relative-path))
-  
-  relative-path)
-
-(defun add-directory-to-exec-path (path)
-  "Add a directory to the PATH environment variable."
-  (interactive "DDirectory: ")
-  (add-to-list 'exec-path path)
-  (prepend-env "PATH" path))
-
-(cl-defmacro os-switch (&key darwin windows linux else)
-  "Perform a different operation depending on the host OS."
-  `(cond ((and ,darwin (eq system-type 'darwin)) (progn ,darwin))
-	 ((and ,windows (eq system-type 'windows-nt)) (progn ,windows))
-	 ((and ,linux (eq system-type 'gnu/linux)) (progn ,linux))
-	 (t (progn ,else))))
-
-(defun eval-region-and-kill ()
-  "Evaluate the region and kill the result."
-  (interactive)
-  (let ((result (eval-last-sexp nil)))
-    (kill-new result)
-    (message result)))
-
-(defun open-init-file ()
-  "Open the init file."
-  (interactive)
-  (find-file user-init-file))
-
-(defun open-init-file-other-window ()
-  "Open the init file in another window."
-  (interactive)
-  (find-file-other-window user-init-file))
-
-(defun open-early-init-file ()
-  "Open the early-init file."
-  (interactive)
-  (find-file (file-in-emacs-directory "early-init.el")))
-
-(defun open-early-init-file-other-window ()
-  "Open the early-init file in another window."
-  (interactive)
-  (find-file-other-window (file-in-emacs-directory "early-init.el")))
-
-(defun my/goto-functions ()
-  "Internal function to jump to the function header in the init file."
-  (interactive)
-  (goto-char (min-point))
-  (re-search-forward "^;;; Functions"))
-
-(defun open-func-file ()
-  "Open the functions file."
-  (interactive)
-  (open-init-file)
-  (my/goto-functions))
-
-(defun open-func-file-other-window ()
-  "Open the functions file in another window."
-  (interactive)
-  (open-init-file-other-window)
-  (my/goto-functions))
-
-(defun my/goto-theme ()
-  "Internal function to jump to the theme header in the init file."
-  (interactive)
-  (goto-char (min-point))
-  (re-search-forward "^;;; Theme"))
-
-(defun open-theme-file ()
-  "Open the theme file."
-  (interactive)
-  (open-init-file)
-  (my/goto-theme))
-
-(defun open-theme-file-other-window ()
-  "Open the theme file in another window."
-  (interactive)
-  (open-init-file-other-window)
-  (my/goto-theme))
-
-(defun my/goto-keymap ()
-  "Internal function to jump to the keymap header in the init file."
-  (interactive)
-  (goto-char (min-point))
-  (re-search-forward "^;;; Keymap"))
-
-(defun open-keymap-file ()
-  "Open the keymap file."
-  (interactive)
-  (open-init-file)
-  (my/goto-keymap))
-
-(defun open-keymap-file-other-window ()
-  "Open the keympa file in another window."
-  (interactive)
-  (open-init-file-other-window)
-  (my/goto-keymap))
-
-(defun open-file-in-emacs-directory (file-path)
-  "Open a file inside of the `user-emacs-directory'."
-  (interactive (eval (nth 1 (interactive-form #'file-in-emacs-directory))))
-  (find-file file-path))
-
-(defun open-college-directory ()
-  "Open college directory with dired."
-  (interactive)
-  (dired "~/Documents/school/College"))
-
-(defun crontab-e ()
-  "Run `crontab -e` in an emacs buffer."
-  (interactive)
-  (with-editor-async-shell-command "crontab -e"))
-
-(defun my/get-regexp-matches-in-file (r filepath group-num)
-  "Returns a list of matches in FILEPATH with regexp R."
-  (setq group-num (or group-num 0))
-  (with-temp-buffer
-    (insert-file-contents filepath)
-    (goto-char (point-min))
-    (let (matches)
-      (while (re-search-forward r nil t)
-	(when (match-string group-num)
-	  (push (match-string group-num) matches)))
-      (nreverse matches))))
-
-(defun use-package-configure (package)
-  "Find the \\[use-package] definition for PACKAGE in `user-init-file'."
-  (interactive (list
-		(completing-read
-		 "Package: " 
-		 (my/get-regexp-matches-in-file "^ *[^;](use-package \\([^()\n]+\\))?" user-init-file 1)
-		 nil t)))
-  (open-init-file)
-  (goto-char (point-min))
-  (re-search-forward (concat "^ *[^;](use-package *\\(" package "\\)")))
+(require 'functions)
 
 ;;; Keymap
 (dolist (bind #'(("C-c o i" . open-init-file)
-		("C-c C-o i" . open-init-file-other-window)
-		("C-c o f" . open-func-file)
-		("C-c C-o f" . open-func-file-other-window)
-		("C-c o t" . open-theme-file)
-		("C-c C-o t" . open-theme-file-other-window)
-		("C-c o k" . open-keymap-file)
-		("C-c C-o k" . open-keymap-file-other-window)
-		("C-c o l" . find-library)
-		("C-c C-o l" . find-library-other-window)
-		("C-c o C-f" . open-file-in-emacs-directory)
-		("C-c o s" . open-college-directory)
-		("<escape>" . keyboard-escape-quit)
-		("M-RET" . toggle-frame-fullscreen)))
+		 ("C-c C-o i" . open-init-file-other-window)
+		 ("C-c o e" . open-early-init-file)
+		 ("C-c o f" . open-func-file)
+		 ("C-c C-o f" . open-func-file-other-window)
+		 ("C-c o t" . open-theme-file)
+		 ("C-c C-o t" . open-theme-file-other-window)
+		 ("C-c o k" . open-keymap-file)
+		 ("C-c C-o k" . open-keymap-file-other-window)
+		 ("C-c o l" . find-library)
+		 ("C-c C-o l" . find-library-other-window)
+		 ("C-c o C-f" . open-file-in-emacs-directory)
+		 ("C-c o s" . open-college-directory)
+		 ("C-c o p" . use-package-configure)
+		 ("<escape>" . keyboard-escape-quit)
+		 ("M-RET" . toggle-frame-fullscreen)))
   (bind-key (car bind) (cdr bind)))
 
-(with-eval-after-load
-    'lisp-mode
-  (define-key lisp-mode-shared-map (kbd "C-c e k") #'eval-region-and-kill))
+(with-eval-after-load 'lisp-mode
+  (keymap-set lisp-mode-shared-map "C-c e k" '("Eval Region and Kill Result" . eval-region-and-kill)))
 
-(with-eval-after-load
-    'prog-mode
-  (define-key prog-mode-map (kbd "C-c C-c") #'ghostel-compile))
+(with-eval-after-load 'prog-mode
+  (keymap-set prog-mode-map "C-c C-c" '("Compile" . compile)))
+
+(with-eval-after-load 'cc-mode
+  (keymap-set c-mode-map "C-c C-c" '("Compile" . compile))
+  (keymap-set c++-mode-map "C-c C-c" '("Compile" . compile)))
 
 ;;; Theme
 (setq-default cursor-type 'bar)
@@ -228,14 +66,16 @@
 ;;(add-hook
 ;; 'window-size-change-functions
 ;; #'(lambda (frame)
+
 ;;   (let ((fullscreen-state (frame-parameter frame 'fullscreen)))
 ;;     (cond ((memq fullscreen-state '(fullboth fullscreen))
 ;;	    (set-frame-parameter frame 'alpha-background 100))
 ;;	   (t (set-frame-parameter frame 'alpha-background (os-switch :darwin 60 :else 80)))))))
 
-(add-hook 'prog-mode-hook #'display-line-numbers-mode)
-
+(defun display-line-numbers-mode-on () (display-line-numbers-mode 1))
 (defun display-line-numbers-mode-off () (display-line-numbers-mode 0))
+
+(add-hook 'prog-mode-hook #'display-line-numbers-mode-on)
 
 (dolist (hook '(help-mode-hook
 		dired-mode-hook
@@ -245,6 +85,7 @@
   (add-hook hook #'display-line-numbers-mode-off))
 
 (use-package hl-line
+  :ensure nil
   :init
   (global-hl-line-mode 1))
 
@@ -281,7 +122,6 @@
 (add-to-list
  'after-make-frame-functions
  (lambda (frame)
-   (--remove-background frame)
    (when (display-graphic-p frame)
      (scroll-bar-mode -1)
      (tool-bar-mode -1))))
@@ -294,6 +134,14 @@
      (tool-bar-mode -1))))
 
 ;; internal emacs changes
+(use-package async
+  :diminish dired-async-mode
+  :init
+  (async-bytecomp-package-mode 1)
+  (dired-async-mode 1)
+  :config
+  (setq async-bytecomp-allowed-packages '(all)))
+
 (setq custom-file (file-in-emacs-directory "custom.el")
       make-backup-files nil
       auto-save-default nil
@@ -305,15 +153,21 @@
       load-prefer-newer t
       ring-bell-function 'ignore
       use-short-answers t
-      mouse-autoselect-window t)
+      mouse-autoselect-window t
+      enable-recursive-minibuffers t)
 (load custom-file 'noerror 'nomessage)
 
 (when (eq system-type 'darwin)
   (add-hook
    'Info-mode-hook
-   #'(lambda () (setq Info-additional-directory-list "/opt/homebrew/share/info/emacs"))))
+   #'(lambda () (setq Info-additional-directory-list '("/opt/homebrew/share/info/emacs")))))
+
+(dolist (extension '(".DS_Store"))
+  (add-to-list 'completion-ignored-extensions extension))
 
 ;;; Package configuration
+(use-package diminish)
+
 (use-package proced
   :ensure nil
   :config (setq proced-auto-update-interval 1)
@@ -322,13 +176,51 @@
 (use-package company
   :hook (prog-mode . company-mode)
   :config
-  (setq company-files-exclusions '(".git/" ".DS_Store")))
+  (setq company-frontends '(company-box-frontend)
+	company-idle-delay 0
+	company-files-exclusions '(".git/" ".DS_Store")))
+
+;; (use-package company-quickhelp
+;;   :after (company pos-tip)
+;;   :config
+;;   (setq company-quickhelp-delay 0.1)
+;;   (company-quickhelp-mode 1))
+
+(defun my/better-elisp-icon-provider (candidate)
+  "Return an icon symbol for CANDIDATE if applicable."
+  (when (derived-mode-p 'emacs-lisp-mode)
+    (let ((sym (intern candidate)))
+      (cond ((major-mode-p sym) 'Constructor)
+	    ((minor-mode-p sym) 'Constructor)
+	    ((string-match-p ":" candidate) 'Field)
+	    ((fboundp sym) 'Function)
+	    ((featurep sym) 'Module)
+	    ((facep sym) 'Color)
+	    ((string-match-p "-hook$" candidate) 'Event)
+	    ((boundp sym) 'Variable)
+	    (t 'Unknown)))))
+
+(use-package company-box
+  :preface
+  (require 'intellij-icons)
+  :diminish company-box-mode
+  :hook (company-mode . company-box-mode)
+  :config
+  (setq company-box-doc-delay 0
+	company-box-doc-no-wrap t
+	company-box-icons-functions (remq 'company-box-icons--elisp company-box-icons-functions))
+  (add-to-list 'company-box-icons-functions 'my/better-elisp-icon-provider))
+
+;; (use-package org-transclusion
+;;   :hook (prog-mode . org-transclusion))
 
 (use-package git-gutter
+  :diminish git-gutter-mode
   :init (global-git-gutter-mode))
 
 ;; dired git
 (use-package dired-git-info
+  :defer t
   :bind (:map dired-mode-map
 	      (")" . dired-git-info-mode))
   :config (setq dgi-auto-hide-details-p nil))
@@ -342,17 +234,14 @@
 
 (use-package dired-omit
   :ensure nil
-  :hook (dired-mode . dired-omit-mode)
+  :hook dired-mode
   :init
   (setq-default dired-omit-files-p t)
   (setq dired-omit-files "^\\.DS_Store\\|\\.tex$\\|\\.#"))
 
-(use-package simpc-mode
-  :vc (:url "https://github.com/rullinoiz/simpc-mode.git" :rev :newest)
-  :mode "\\.[hc]\\(pp\\)?\\'")
-
-(use-package company-quickhelp
-  :init (company-quickhelp-mode 1))
+;; (use-package simpc-mode
+;;   :vc (:url "https://github.com/rullinoiz/simpc-mode.git" :rev :newest)
+;;   :init (major-mode-remap-add 'c-mode 'simpc-mode))
 
 (use-package calc
   :ensure nil
@@ -361,49 +250,72 @@
 
 (use-package eglot
   :defer t
-  :hook ((simpc-mode . eglot-ensure)
+  :hook ((c-ts-mode . eglot-ensure)
+	 (c++-ts-mode . eglot-ensure)
 	 (lua-mode . eglot-ensure)
 	 (python-mode . eglot-ensure)
 	 (java-mode . eglot-ensure)
 	 (kotlin-mode . eglot-ensure)
-	 (v-mode . eglot-ensure)
-	 )
+	 (v-mode . eglot-ensure))
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
   (setq eglot-connect-timeout 120))
 
+(use-package c-ts-mode
+  :ensure nil
+  :defer t
+  :init
+  (major-mode-remap-add 'c-mode 'c-ts-mode)
+  (major-mode-remap-add 'c++-mode 'c++-ts-mode))
+
 (use-package casual)
 
 (use-package cobol-mode
+  :defer t
   :mode (("\\.cbl\\'" . cobol-mode)
 	 ("\\.cob\\'" . cobol-mode)))
 
 (use-package intercal-mode
   :ensure nil
+  :defer t
   :load-path "modes/intercal/"
   :mode "\\.i[0-9]*\\'")
 
-(use-package conf-mode)
+(use-package conf-mode
+  :defer t)
 
-(use-package nginx-mode)
+(use-package nginx-mode
+  :defer t)
 
-(use-package systemd)
+(use-package systemd
+  :defer t)
 
-(use-package cmake-mode)
+(use-package cmake-mode
+  :defer t)
 
-(use-package kotlin-mode)
+(use-package kotlin-mode
+  :defer t)
 
 (use-package lua-mode
   :defer t
   :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
 		lua-indent-level 4))
 
-(use-package php-mode)
+(use-package php-mode
+  :defer t)
 
 (use-package v-mode
+  :defer t
   :vc (:url "https://github.com/rullinoiz/v-mode.git" :rev :newest))
+
+(use-package odin-mode
+  :defer t
+  :vc (:url "https://github.com/rullinoiz/odin-mode.git" :rev :newest))
+
+(use-package javap-mode
+  :defer t)
 
 (use-package transpose-frame
   :defer t
@@ -435,6 +347,22 @@
   (completion-pcm-leading-wildcard t))
 
 (use-package vertico
+  :preface
+  (defun vertico-describe-candidate ()
+    "Describes the current minibuffer selection in the M-x menu."
+    (interactive)
+    (let ((selection (and (bound-and-true-p vertico--input)
+			  (vertico--candidate))))
+      (if (not selection)
+	  (message "No candidate selected")
+	(let ((symbol (intern selection)))
+	  (cond
+	   ;; M-x
+	   ((fboundp symbol)
+	    (describe-function symbol))
+	   (t (message "Cannot describe: %s" selection)))))))
+  :bind (:map vertico-map
+	      ("C-h" . vertico-describe-candidate))
   :init
   (vertico-mode)
   (vertico-mouse-mode 1)
@@ -450,7 +378,7 @@
 (use-package marginalia
   :init (marginalia-mode)
   :config
-  (setq marginalia-align 'right
+  (setq ;;marginalia-align 'right
 	marginalia-align-offset 0
 	marginalia-max-relative-age 0))
 
@@ -465,15 +393,16 @@
   :init (multiple-cursors-mode))
 
 (use-package ghostel
-  :defer t)
+  :defer t
+  :init
+  (ghostel-compile-global-mode 1))
 
 (use-package auctex
   :defer t)
 
 (use-package org-latex-preview
   :ensure nil
-  :defer t
-  :hook (org-mode . org-latex-preview-mode)
+  :hook org-mode
   :config
   (plist-put org-latex-preview-appearance-options
 	     :page-width 0.8)
