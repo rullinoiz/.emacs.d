@@ -34,7 +34,6 @@
 (add-hook
  'after-init-hook
  (lambda ()
-   (xterm-mouse-mode 1)
    (mouse-wheel-mode 1)))
 
 (when (display-graphic-p)
