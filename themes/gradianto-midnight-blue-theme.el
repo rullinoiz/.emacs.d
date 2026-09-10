@@ -2,8 +2,11 @@
 
 (deftheme gradianto-midnight-blue "jetbrains my beloved")
 
+(load-theme 'org-common t t)
+
 (custom-theme-set-faces
  'gradianto-midnight-blue
+ 
  '(default ((t (:background "#1a1a25" :foreground "#d8d8d8" :family "JetBrains Mono" :height 130))))
  '(fixed-pitch ((t (:family "JetBrains Mono NL"))))
  '(variable-pitch ((t (:family "CMU Sans Serif"))))
@@ -17,11 +20,17 @@
  '(mode-line-inactive ((t (:box nil))))
  '(show-paren-match ((t (:background "#3B514D" :foreground "#FFEF28"))))
 
+ '(tab-line ((t (:inherit default))))
+ '(tab-line-inactive ((t (:box nil))))
+
+ '(minibuffer-prompt ((t (:foreground "#00D66E"))))
+ 
  '(fringe ((t (:inherit default))))
 
  '(hl-line ((t (:background "#27243d" :extend t))))
 
  '(window-divider ((t (:foreground "#423A5F"))))
+ '(vertical-border ((t (:foreground "#423A5F"))))
  
  '(font-lock-function-name-face ((t (:foreground "#ebbf8c"))))
  '(font-lock-number-face ((t (:foreground "#bbb55b"))))
@@ -42,6 +51,20 @@
  '(eglot-semantic-number ((t (:inherit font-lock-number-face))))
  '(eglot-highlight-symbol-face ((t (:background "#283551"))))
 
+ '(company-tooltip ((t (:background "#282839" :foreground "gray100"))))
+ '(company-tooltip-common ((t (:foreground "#CDCB46"))))
+ '(company-tooltip-selection ((t (:background "#47387E"))))
  )
+
+(custom-theme-set-variables
+ 'gradianto-midnight-blue
+
+ '(company-icon-margin 3)
+ 
+ '(company-box-icon-right-margin 2)
+ '(company-box-icons-alist 'company-box-icons-intellij-dark)
+ )
+
+(enable-theme 'org-common)
 
 (provide-theme 'gradianto-midnight-blue)

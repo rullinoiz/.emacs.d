@@ -267,7 +267,12 @@
   :ensure nil
   :defer t
   :init
-  (major-mode-remap-add 'c-mode 'c-ts-mode)
+  (major-mode-remap-add 'c++-mode 'c++-ts-mode))
+
+(use-package c++-ts-mode
+  :ensure nil
+  :defer t
+  :init
   (major-mode-remap-add 'c++-mode 'c++-ts-mode))
 
 (use-package casual)

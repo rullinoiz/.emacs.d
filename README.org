@@ -1,0 +1,5 @@
+#+TITLE: oiz's extra crunchy emacs folder
+
+** Setup
+
+ya so basically just run ~M-x package-refresh-contents~ if it complains about missing packages and restart emacs
