@@ -188,7 +188,7 @@
        (fboundp symbol)
        (or (get symbol 'derived-mode-parent)
 	   (eq symbol 'fundamental-mode)
-	   (let ((doc (documentation symbol)))
-	     (and doc (string-match-p "major mode" doc))))))
+	   (and (not (minor-mode-p symbol))
+		(string-match-p "-mode$" (symbol-name symbol))))))
 
 (provide 'functions)
