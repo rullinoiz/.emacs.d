@@ -48,8 +48,16 @@
  '(font-lock-warning-face ((t (:foreground "#bc3f3c"))))
  '(font-lock-preprocessor-face ((t (:foreground "#CBBC3A"))))
 
- '(eglot-semantic-number ((t (:inherit font-lock-number-face))))
  '(eglot-highlight-symbol-face ((t (:background "#283551"))))
+
+ '(eglot-semantic-number ((t (:inherit font-lock-number-face))))
+ '(eglot-semantic-class ((t (:inherit font-lock-type-face))))
+ '(eglot-semantic-modifier ((t (:inherit font-lock-keyword-face))))
+ '(eglot-semantic-method ((t (:inherit font-lock-function-name-face))))
+ '(eglot-semantic-namespace ((t (:inherit default))))
+
+ '(eglot-semantic-declaration ((t)))
+ '(eglot-semantic-static ((t)))
 
  '(company-tooltip ((t (:background "#282839" :foreground "gray100"))))
  '(company-tooltip-common ((t (:foreground "#CDCB46"))))
