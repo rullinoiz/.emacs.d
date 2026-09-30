@@ -46,6 +46,7 @@
 		 ("C-c o C-f" . open-file-in-emacs-directory)
 		 ("C-c o s" . open-college-directory)
 		 ("C-c o p" . use-package-configure)
+		 ("C-x C-b" . electric-buffer-list)
 		 ("<escape>" . keyboard-escape-quit)
 		 ("M-RET" . toggle-frame-fullscreen)))
   (bind-key (car bind) (cdr bind)))
@@ -59,6 +60,9 @@
 (with-eval-after-load 'cc-mode
   (keymap-set c-mode-map "C-c C-c" '("Compile" . compile))
   (keymap-set c++-mode-map "C-c C-c" '("Compile" . compile)))
+
+(with-eval-after-load 'sh-script
+  (keymap-set sh-mode-map "C-c C-r" '("Sudo-edit" . sudo-edit)))
 
 ;;; Theme
 (setq-default cursor-type 'bar)
@@ -155,6 +159,7 @@
       use-short-answers t
       mouse-autoselect-window t
       enable-recursive-minibuffers t)
+
 (load custom-file 'noerror 'nomessage)
 
 (when (eq system-type 'darwin)
@@ -164,6 +169,8 @@
 
 (dolist (extension '(".DS_Store"))
   (add-to-list 'completion-ignored-extensions extension))
+
+(add-to-list 'auto-mode-alist '("\\.log" . auto-revert-mode))
 
 ;;; Package configuration
 (use-package diminish)
@@ -254,26 +261,33 @@
 	 (c++-ts-mode . eglot-ensure)
 	 (lua-mode . eglot-ensure)
 	 (python-mode . eglot-ensure)
-	 (java-mode . eglot-ensure)
+	 (java-ts-mode . eglot-ensure)
 	 (kotlin-mode . eglot-ensure)
 	 (v-mode . eglot-ensure))
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
-  (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
+  ;; (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
-  (setq eglot-connect-timeout 120))
+  (setq eglot-connect-timeout 120
+	eglot-report-progress nil))
 
 (use-package c-ts-mode
   :ensure nil
   :defer t
   :init
-  (major-mode-remap-add 'c++-mode 'c++-ts-mode))
+  (major-mode-remap-add 'c-mode 'c-ts-mode))
 
 (use-package c++-ts-mode
   :ensure nil
   :defer t
   :init
   (major-mode-remap-add 'c++-mode 'c++-ts-mode))
+
+(use-package java-ts-mode
+  :ensure nil
+  :defer t
+  :init
+  (major-mode-remap-add 'java-mode 'java-ts-mode))
 
 (use-package casual)
 
@@ -289,7 +303,8 @@
   :mode "\\.i[0-9]*\\'")
 
 (use-package conf-mode
-  :defer t)
+  :defer t
+  :hook ((conf-mode . display-line-numbers-mode)))
 
 (use-package nginx-mode
   :defer t)
@@ -308,8 +323,11 @@
   :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
 		lua-indent-level 4))
 
-(use-package php-mode
-  :defer t)
+(use-package php-ts-mode
+  :ensure nil
+  :defer t
+  :init
+  (major-mode-remap-add 'php-mode 'php-ts-mode))
 
 (use-package v-mode
   :defer t
@@ -322,9 +340,8 @@
 (use-package javap-mode
   :defer t)
 
-(use-package transpose-frame
-  :defer t
-  :bind (("C-x 4 t" . transpose-frame)))
+(use-package dape
+  :defer t)
 
 (use-package sudo-edit
   :bind (("C-c C-r" . sudo-edit)))
@@ -387,6 +404,10 @@
 	marginalia-align-offset 0
 	marginalia-max-relative-age 0))
 
+(use-package treemacs
+  :bind ("<f5>" . treemacs)
+  :hook (treemacs-mode . treemacs-project-follow-mode))
+
 ;; (use-package vertico-posframe
 ;;   :after vertico
 ;;   :custom (vertico-posframe-parameters
@@ -447,7 +468,20 @@
       (sp-local-pair 'org-mode (car pair) (cdr pair) :actions '(insert))))
   :hook (org-mode . my/smartparens-mode-setup))
 
-(use-package popper)
+(use-package popper
+  :bind (("C-`" . popper-toggle)
+	 ("M-`" . popper-cycle)
+	 ("C-M-`" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+	'("\\*Messages\\*"
+	  "Output\\*$"
+	  "\\*Async Shell Command\\*"
+	  help-mode
+	  compilation-mode
+	  Man-mode))
+  (popper-mode +1)
+  (popper-echo-mode +1))
 
 (use-package gptel
   :defer t
