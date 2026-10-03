@@ -61,6 +61,9 @@
   (keymap-set c-mode-map "C-c C-c" '("Compile" . compile))
   (keymap-set c++-mode-map "C-c C-c" '("Compile" . compile)))
 
+(with-eval-after-load 'c-ts-mode
+  (keymap-set c-ts-base-mode-map "C-c C-c" '("Compile" . compile)))
+
 (with-eval-after-load 'sh-script
   (keymap-set sh-mode-map "C-c C-r" '("Sudo-edit" . sudo-edit)))
 
@@ -274,6 +277,8 @@
 (use-package c-ts-mode
   :ensure nil
   :defer t
+  :custom
+  (c-ts-indent-offset 4)
   :init
   (major-mode-remap-add 'c-mode 'c-ts-mode))
 
