@@ -16,8 +16,8 @@
  
  '(line-number ((t (:foreground "#B1B7BC")))) 
  '(line-number-current-line ((t (:inherit line-number :background "#27243d" :foreground "#DBE3E9"))))
- '(mode-line ((t (:background "#282839" :foreground "gray100" :height 140))))
- '(mode-line-inactive ((t (:box nil))))
+ '(mode-line ((t (:background "#282839" :foreground "gray100" :height 140 :box (:line-width 4 :color "#282839")))))
+ '(mode-line-inactive ((t (:inherit mode-line :background "#1a1a25" :box (:line-width 4 :color "#1a1a25")))))
  '(show-paren-match ((t (:background "#3B514D" :foreground "#FFEF28"))))
 
  '(tab-line ((t (:inherit default))))
