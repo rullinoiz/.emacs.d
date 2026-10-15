@@ -1,8 +1,5 @@
 ;;; functions.el --- my init.el functions -*- lexical-binding: t -*-
 
-(eval-when-compile
-  (require 'cl-lib))
-
 (defun get-environment-variables ()
   "Get a list of all defined environment variables."
   (mapcar #'(lambda (str)
@@ -49,13 +46,6 @@
   (add-to-list 'exec-path directory)
   (prepend-env "PATH" directory))
 
-(cl-defmacro os-switch (&key darwin windows linux else)
-  "Perform a different operation depending on the host OS."
-  `(cond ((and ,darwin (eq system-type 'darwin)) (progn ,darwin))
-	 ((and ,windows (eq system-type 'windows-nt)) (progn ,windows))
-	 ((and ,linux (eq system-type 'gnu/linux)) (progn ,linux))
-	 (t (progn ,else))))
-
 (defun eval-region-and-kill ()
   "Evaluate the region and kill the result."
   (interactive)
@@ -96,7 +86,7 @@
 (defun my/goto-theme ()
   "Internal function to jump to the theme header in the init file."
   (interactive)
-  (goto-char (min-point))
+  (goto-char (point-min))
   (re-search-forward "^;;; Theme"))
 
 (defun open-theme-file ()
@@ -114,7 +104,7 @@
 (defun my/goto-keymap ()
   "Internal function to jump to the keymap header in the init file."
   (interactive)
-  (goto-char (min-point))
+  (goto-char (point-min))
   (re-search-forward "^;;; Keymap"))
 
 (defun open-keymap-file ()
@@ -138,6 +128,11 @@
   "Open college directory with dired."
   (interactive)
   (dired "~/Documents/school/College"))
+
+(defun open-snippets-directory ()
+  "Open user snippets directory with dired."
+  (interactive)
+  (dired (concat user-emacs-directory "snippets")))
 
 (defun crontab-e ()
   "Run `crontab -e` in an emacs buffer."
@@ -166,6 +161,43 @@
   (open-init-file)
   (goto-char (point-min))
   (re-search-forward (concat "^ *[^;](use-package *\\(" package "\\)")))
+
+(defun get-outermost-sexp ()
+  (interactive)
+  (save-excursion
+    (while (ignore-errors (backward-up-list 1) t))
+    (let ((start (point)))
+      (forward-sexp 1)
+      (cons start (point)))))
+    
+;; (defun use-package-configure--narrow-to-region (start end)
+;;   "Creates indirect buffer from START to END."
+;;   (deactivate-mark)
+;;   (let ((buf (clone-indirect-buffer nil nil)))
+;;     (with-current-buffer buf
+;;       (narrow-to-region start end))
+;;     (switch-to-buffer buf)))
+
+;; (defun use-package-configure (package)
+;;   "Find the `use-package' definition for PACKAGE in `user-init-file'."
+;;   (interactive (list
+;; 		(completing-read
+;; 		 "Package: "
+;; 		 (my/get-regexp-matches-in-file "^ *[^;](use-package \\([^()\n]+\\))?" user-init-file 1)
+;; 		 nil t)))
+
+;;   (open-init-file)
+;;   (goto-char (point-min))
+;;   (re-search-forward (concat "^ *[^;](use-package *\\(" package "\\)"))
+
+;;   (if (not current-prefix-arg)
+;;       (let* ((region (get-outermost-sexp))
+;; 	     (start (car region))
+;; 	     (end (cdr region))
+;; 	     (buf (edit-indirect-region start end)))
+;; 	(switch-to-buffer buf)
+;; 	(with-current-buffer buf
+;; 	  (emacs-lisp-mode)))))
 
 (defun major-mode-remap-add (majormode newmode)
   "Adds a major mode remap to `major-mode-remap-alist'. Replaces the remap if it already exists."

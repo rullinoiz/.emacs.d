@@ -17,19 +17,28 @@
 (use-package org
   :load-path "~/.emacs.d/elpa/org-mode/lisp/"
   :defer t
+  :bind (("C-c c" . org-capture))
   :hook ((org-mode . visual-line-mode)
          (org-mode . display-line-numbers-mode)
 	 (org-mode . org-latex-preview))
+  :commands org-read-date
   :init (setq org-list-allow-alphabetical t
 	      org-highlight-latex-and-related '(latex script entities)
 	      org-latex-preview-preamble "\\documentclass{article}
 [DEFAULT-PACKAGES]
 [PACKAGES]
 \\usepackage{xcolor}
-\\usepackage{amssymb}"))
+\\usepackage{amssymb}"
+	      org-capture-templates
+	      '(
+		("j" "Journal Entry"
+		 entry (file+datetree "~/journal.org")
+		 "* %?"
+		 :empty-lines 1))))
 
 ;;; Functions
 (require 'functions)
+(require 'macros)
 
 ;;; Keymap
 (dolist (bind #'(("C-c o i" . open-init-file)
@@ -107,8 +116,9 @@
   :preface
   (defun my/doom-modeline-icons (&optional frame)
     (let ((graphic (display-graphic-p frame)))
-      (setq doom-modeline-major-mode-icon graphic
-	    doom-modeline-vcs-icon graphic)))
+      (with-selected-frame frame
+	(setq-local doom-modeline-major-mode-icon graphic
+		    doom-modeline-vcs-icon graphic))))
   :init
   (setq doom-modeline-buffer-file-name-style 'file-name-with-project
 	doom-modeline-height 20
@@ -117,28 +127,30 @@
 	doom-modeline-major-mode-color-icon t
 	nerd-icons-scale-factor 1.2)
 
-  (add-hook 'after-init-hook #'my/doom-modeline-icons)
   (add-to-list 'after-make-frame-functions #'my/doom-modeline-icons)
   
   (doom-modeline-mode 1)
   :config
   (doom-modeline-def-modeline 'main
-    '(bar workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
+    '(workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
     '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode)))
+
+(defun --disable-scroll-and-tool-bar ()
+  "Exactly how it sounds"
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1))
 
 (add-to-list
  'after-make-frame-functions
  (lambda (frame)
    (when (display-graphic-p frame)
-     (scroll-bar-mode -1)
-     (tool-bar-mode -1))))
+     (--disable-scroll-and-tool-bar))))
 
 (add-hook
  'after-init-hook
  (lambda ()
    (when (display-graphic-p (selected-frame))
-     (scroll-bar-mode -1)
-     (tool-bar-mode -1))))
+     (--disable-scroll-and-tool-bar))))
 
 ;; internal emacs changes
 (use-package async
@@ -238,6 +250,7 @@
 (use-package dired
   :ensure nil
   :config
+  (setq dired-auto-revert-buffer t)
   (when (eq system-type 'darwin)
     (setq dired-use-ls-dired t
 	  insert-directory-program "/opt/homebrew/bin/gls")))
@@ -260,6 +273,8 @@
 
 (use-package eglot
   :defer t
+  :bind (:map eglot-mode-map
+	      ("C-c C-v" . eglot-code-actions))
   :hook ((c-ts-mode . eglot-ensure)
 	 (c++-ts-mode . eglot-ensure)
 	 (lua-mode . eglot-ensure)
@@ -272,7 +287,8 @@
   ;; (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
   (setq eglot-connect-timeout 120
-	eglot-report-progress nil))
+	eglot-report-progress nil
+	eglot-code-action-indications '(left-fringe )))
 
 (use-package c-ts-mode
   :ensure nil
@@ -325,7 +341,7 @@
 
 (use-package lua-mode
   :defer t
-  :config (setq lua-default-application (os-switch :darwin "/opt/homebrew/bin/lua")
+  :config (setq lua-default-application (os-switch! :darwin "/opt/homebrew/bin/lua")
 		lua-indent-level 4))
 
 (use-package php-ts-mode
@@ -344,6 +360,15 @@
 
 (use-package javap-mode
   :defer t)
+
+(use-package plantuml-mode
+  :defer t
+  :config
+  (when (eq system-type 'darwin)
+    (setq plantuml-jar-path "/opt/homebrew/opt/plantuml/libexec/plantuml.jar"
+	  plantuml-default-exec-mode 'jar
+	  plantuml-output-type "png"
+	  plantuml-jar-args (list "-charset" "UTF-8" "-Sdpi=96"))))
 
 (use-package dape
   :defer t)
@@ -386,7 +411,8 @@
 	  (cond
 	   ;; M-x
 	   ((fboundp symbol)
-	    (describe-function symbol))
+	    (let ((help-window-select nil))
+	      (describe-function symbol)))
 	   (t (message "Cannot describe: %s" selection)))))))
   :bind (:map vertico-map
 	      ("C-h" . vertico-describe-candidate))
@@ -473,18 +499,24 @@
       (sp-local-pair 'org-mode (car pair) (cdr pair) :actions '(insert))))
   :hook (org-mode . my/smartparens-mode-setup))
 
+(use-package yasnippet
+  :hook (prog-mode . yas-minor-mode)
+  :config
+  (setq yas-snippet-dirs
+	`(,(concat user-emacs-directory "snippets"))))
+
 (use-package popper
   :bind (("C-`" . popper-toggle)
 	 ("M-`" . popper-cycle)
 	 ("C-M-`" . popper-toggle-type))
   :init
-  (setq popper-reference-buffers
-	'("\\*Messages\\*"
-	  "Output\\*$"
-	  "\\*Async Shell Command\\*"
-	  help-mode
-	  compilation-mode
-	  Man-mode))
+  (setq popper-reference-buffers '("\\*Messages\\*"
+				   "[oO]utput\\*$"
+				   "\\*Async Shell Command\\*"
+				   help-mode
+				   compilation-mode
+				   Man-mode)
+	popper-group-function #'popper-group-by-project)
   (popper-mode +1)
   (popper-echo-mode +1))
 
