@@ -2,6 +2,7 @@
 
 (setq inhibit-startup-screen t)
 
+;; supa speed
 (setq gc-cons-threshold most-positive-fixnum)
 (add-hook
  'emacs-startup-hook
