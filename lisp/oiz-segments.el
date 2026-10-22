@@ -3,7 +3,7 @@
 (defmacro oiz-segments-define (name reqs &rest body)
   "Define a doom-modeline segment NAME that uses REQS with BODY."
   (declare (indent defun))
-  (if (all #'featurep reqs)
+  (if (all (lambda (sym) (require sym nil t)) reqs)
       `(progn ,@(mapcar (lambda (sym) `(require (quote ,sym))) reqs)
 	      (doom-modeline-def-segment ,name ,@body))
     `(doom-modeline-def-segment ,name "")))
