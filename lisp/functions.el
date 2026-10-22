@@ -1,10 +1,14 @@
 ;;; functions.el --- my init.el functions -*- lexical-binding: t -*-
 
 (defun get-environment-variables ()
-  "Get a list of all defined environment variables."
+  "Get a table of all defined environment variables.
+
+The table is an alist in the form (VARIABLE . VALUE), where
+VARIABLE is the environment variable and VALUE is its
+associated value."
   (mapcar #'(lambda (str)
-	      (string-match "\\([a-zA-Z0-9_]+\\)=." str)
-	      (match-string 1 str))
+	      (string-match "\\([a-zA-Z0-9_]+\\)=\\(.*\\)" str)
+	      (cons (match-string 1 str) (match-string 2 str)))
 	  process-environment))
 
 (defun --prompt-env ()
@@ -54,7 +58,7 @@
     (message result)))
 
 (defun open-init-file ()
-  "Open the init file."
+  "Open the init file as defined by the variable `user-init-file'."
   (interactive)
   (find-file user-init-file))
 
