@@ -8,15 +8,16 @@
 (package-initialize)
 
 ;;; must be above all org definitions
-(use-package org-mode
-  :ensure t
-  :defer t
-  :no-require t
-  :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev"))
+;; (use-package org-mode
+;;   :ensure t
+;;   :defer t
+;;   :no-require t
+;;   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev"))
 
 (use-package org
-  :load-path "~/.emacs.d/elpa/org-mode/lisp/"
   :defer t
+  :ensure t
+  :vc (:url "https://git.savannah.gnu.org/git/emacs/org-mode.git" :branch "main")
   :bind (("C-c c" . org-capture))
   :hook ((org-mode . visual-line-mode)
          (org-mode . display-line-numbers-mode)
@@ -24,11 +25,6 @@
   :commands org-read-date
   :init (setq org-list-allow-alphabetical t
 	      org-highlight-latex-and-related '(latex script entities)
-	      org-latex-preview-preamble "\\documentclass{article}
-[DEFAULT-PACKAGES]
-[PACKAGES]
-\\usepackage{xcolor}
-\\usepackage{amssymb}"
 	      org-capture-templates
 	      '(
 		("j" "Journal Entry"
@@ -65,13 +61,6 @@
 
 (with-eval-after-load 'prog-mode
   (keymap-set prog-mode-map "C-c C-c" '("Compile" . compile)))
-
-(with-eval-after-load 'cc-mode
-  (keymap-set c-mode-map "C-c C-c" '("Compile" . compile))
-  (keymap-set c++-mode-map "C-c C-c" '("Compile" . compile)))
-
-(with-eval-after-load 'c-ts-mode
-  (keymap-set c-ts-base-mode-map "C-c C-c" '("Compile" . compile)))
 
 (with-eval-after-load 'sh-script
   (keymap-set sh-mode-map "C-c C-r" '("Sudo-edit" . sudo-edit)))
@@ -113,6 +102,7 @@
 	       '("v" nerd-icons-sucicon "nf-custom-v_lang" :face nerd-icons-cyan)))
 
 (use-package doom-modeline
+  :after popper
   :preface
   (defun my/doom-modeline-icons (&optional frame)
     (let ((graphic (display-graphic-p frame)))
@@ -131,8 +121,10 @@
   
   (doom-modeline-mode 1)
   :config
+  (require 'oiz-segments)
+  
   (doom-modeline-def-modeline 'main
-    '(workspace-name window-number modals matches buffer-info vcs remote-host parrot selection-info)
+    '(bar popper-status workspace-name window-number modals matches buffer-info popper-buried-popups vcs remote-host parrot selection-info)
     '(objed-state misc-info persp-name grip irc mu4e gnus github repl lsp minor-modes process major-mode)))
 
 (defun --disable-scroll-and-tool-bar ()
@@ -225,13 +217,21 @@
 (use-package company-box
   :preface
   (require 'intellij-icons)
+
+  (defun my/company-box-doc-show-shim (orig-fun &rest args)
+    "USE YOUR OWN HELP BUFFER!!!!!! STOP USING MINE!!!"
+    (cl-letf* (((symbol-function 'help-buffer) (lambda () (get-buffer-create "*company-box-help*"))))
+      (apply orig-fun args)))
+  
   :diminish company-box-mode
   :hook (company-mode . company-box-mode)
   :config
   (setq company-box-doc-delay 0
+	company-box-doc-enable t
 	company-box-doc-no-wrap t
 	company-box-icons-functions (remq 'company-box-icons--elisp company-box-icons-functions))
-  (add-to-list 'company-box-icons-functions 'my/better-elisp-icon-provider))
+  (add-to-list 'company-box-icons-functions #'my/better-elisp-icon-provider)
+  (advice-add 'company-box-doc--show :around #'my/company-box-doc-show-shim))
 
 ;; (use-package org-transclusion
 ;;   :hook (prog-mode . org-transclusion))
@@ -293,6 +293,8 @@
 (use-package c-ts-mode
   :ensure nil
   :defer t
+  :bind* (:map c-ts-mode-map
+	       ("C-c C-c" . compile))
   :custom
   (c-ts-indent-offset 4)
   :init
@@ -301,6 +303,10 @@
 (use-package c++-ts-mode
   :ensure nil
   :defer t
+  :bind* (:map c++-ts-mode-map
+	       ("C-c C-c" . compile))
+  :custom
+  (c++-ts-indent-offset 4)
   :init
   (major-mode-remap-add 'c++-mode 'c++-ts-mode))
 
@@ -374,7 +380,7 @@
   :defer t)
 
 (use-package sudo-edit
-  :bind (("C-c C-r" . sudo-edit)))
+  :bind* (("C-c C-r" . sudo-edit)))
 
 (use-package my-present
   :ensure nil
@@ -466,7 +472,12 @@
 
   (setq org-latex-preview-mode-display-live t
 	org-latex-preview-mode-update-delay 0
-	org-latex-preview-cache 'temp))
+	org-latex-preview-cache 'temp
+	org-latex-preview-preamble "\\documentclass{article}
+[DEFAULT-PACKAGES]
+[PACKAGES]
+\\usepackage{xcolor}
+\\usepackage{amssymb}"))
 
 (use-package cdlatex
   :defer t
@@ -508,6 +519,7 @@
 (use-package popper
   :bind (("C-`" . popper-toggle)
 	 ("M-`" . popper-cycle)
+	 ("M-S-`" . popper-cycle-backwards)
 	 ("C-M-`" . popper-toggle-type))
   :init
   (setq popper-reference-buffers '("\\*Messages\\*"
@@ -516,9 +528,11 @@
 				   help-mode
 				   compilation-mode
 				   Man-mode)
-	popper-group-function #'popper-group-by-project)
+	popper-group-function nil
+	popper-window-height 25)
   (popper-mode +1)
-  (popper-echo-mode +1))
+  :config
+  (setq popper-mode-line ""))
 
 (use-package gptel
   :defer t
