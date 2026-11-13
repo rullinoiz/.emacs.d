@@ -1,8 +1,5 @@
 ;;; -*- lexical-binding: t -*-
 
-;; (benchmark-init/activate)
-;; (add-hook 'after-init-hook #'benchmark-init/deactivate)
-
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 (package-initialize)
@@ -14,6 +11,9 @@
 ;;   :no-require t
 ;;   :vc (:url "https://code.tecosaur.net/tec/org-mode" :branch "dev"))
 
+;;(require 'oiz-docs)
+(require 'my-present)
+
 (use-package org
   :defer t
   :ensure t
@@ -22,15 +22,24 @@
   :hook ((org-mode . visual-line-mode)
          (org-mode . display-line-numbers-mode)
 	 (org-mode . org-latex-preview))
-  :commands org-read-date
-  :init (setq org-list-allow-alphabetical t
-	      org-highlight-latex-and-related '(latex script entities)
-	      org-capture-templates
-	      '(
-		("j" "Journal Entry"
-		 entry (file+datetree "~/journal.org")
-		 "* %?"
-		 :empty-lines 1))))
+  :commands (org-read-date org-time-stamp)
+  :config
+  (setq org-list-allow-alphabetical t
+	org-highlight-latex-and-related '(latex script entities)
+	org-capture-templates
+	'(
+	  ("j" "Journal Entry"
+	   entry (file+datetree "~/journal.org")
+	   "* %?"
+	   :empty-lines 1))
+	org-babel-python-command "python3"
+	org-confirm-babel-evaluate nil
+	org-image-actual-width nil)
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     (emacs-lisp . t))))
 
 ;;; Functions
 (require 'functions)
@@ -184,8 +193,8 @@
 
 (use-package proced
   :ensure nil
-  :config (setq proced-auto-update-interval 1)
-  :hook ((proced-mode . proced-toggle-auto-update)))
+  :hook ((proced-mode . proced-toggle-auto-update))
+  :config (setq proced-auto-update-interval 1))
 
 (use-package company
   :hook (prog-mode . company-mode)
@@ -200,7 +209,16 @@
 ;;   (setq company-quickhelp-delay 0.1)
 ;;   (company-quickhelp-mode 1))
 
-(defun my/better-elisp-icon-provider (candidate)
+(use-package company-box
+  :preface
+  (require 'intellij-icons)
+
+  (defun my/company-box-doc-show-shim (orig-fun &rest args)
+    "USE YOUR OWN HELP BUFFER!!!!!! STOP USING MINE!!!"
+    (cl-letf* (((symbol-function 'help-buffer) (lambda () (get-buffer-create "*company-box-help*"))))
+      (apply orig-fun args)))
+
+  (defun my/better-elisp-icon-provider (candidate)
   "Return an icon symbol for CANDIDATE if applicable."
   (when (derived-mode-p 'emacs-lisp-mode)
     (let ((sym (intern candidate)))
@@ -213,15 +231,6 @@
 	    ((string-match-p "-hook$" candidate) 'Event)
 	    ((boundp sym) 'Variable)
 	    (t 'Unknown)))))
-
-(use-package company-box
-  :preface
-  (require 'intellij-icons)
-
-  (defun my/company-box-doc-show-shim (orig-fun &rest args)
-    "USE YOUR OWN HELP BUFFER!!!!!! STOP USING MINE!!!"
-    (cl-letf* (((symbol-function 'help-buffer) (lambda () (get-buffer-create "*company-box-help*"))))
-      (apply orig-fun args)))
   
   :diminish company-box-mode
   :hook (company-mode . company-box-mode)
@@ -245,15 +254,19 @@
   :defer t
   :bind (:map dired-mode-map
 	      (")" . dired-git-info-mode))
-  :config (setq dgi-auto-hide-details-p nil))
+  :custom
+  (dgi-auto-hide-details-p nil))
 
 (use-package dired
   :ensure nil
   :config
-  (setq dired-auto-revert-buffer t)
+  (define-key dired-mode-map [mouse-2] 'dired-mouse-find-file)
   (when (eq system-type 'darwin)
     (setq dired-use-ls-dired t
-	  insert-directory-program "/opt/homebrew/bin/gls")))
+	  insert-directory-program "/opt/homebrew/bin/gls"))
+  :custom
+  (dired-auto-revert-buffer t)
+  (dired-clean-confirm-killing-deleted-buffers nil))
 
 (use-package dired-omit
   :ensure nil
@@ -284,11 +297,10 @@
 	 (v-mode . eglot-ensure))
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
-  ;; (add-to-list 'eglot-server-programs '(java-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
   (setq eglot-connect-timeout 120
 	eglot-report-progress nil
-	eglot-code-action-indications '(left-fringe )))
+	eglot-code-action-indications nil))
 
 (use-package c-ts-mode
   :ensure nil
@@ -396,9 +408,8 @@
    '(read-only t cursor-intangible t face minibuffer-prompt)))
 
 (use-package orderless
-  :config
-  (setq orderless-matching-styles '(orderless-flex))
   :custom
+  (orderless-matching-styles '(orderless-flex))
   (completion-styles '(basic flex))
   (completion-category-overrides '((file (styles partial-completion))))
   (completion-category-defaults nil)
@@ -407,7 +418,7 @@
 (use-package vertico
   :preface
   (defun vertico-describe-candidate ()
-    "Describes the current minibuffer selection in the M-x menu."
+    "Describes the current minibuffer selection in the \\[execute-extended-command] menu."
     (interactive)
     (let ((selection (and (bound-and-true-p vertico--input)
 			  (vertico--candidate))))
@@ -453,12 +464,14 @@
 ;;   :init (vertico-posframe-mode 1))
 
 (use-package multiple-cursors
-  :init (multiple-cursors-mode))
+  :init (multiple-cursors-mode)
+  :bind (("C->" . mc/mark-next-like-this)
+	 ("C-<" . mc/mark-previous-like-this)
+	 ("C-c C-<" . mc/mark-all-like-this)))
 
 (use-package ghostel
   :defer t
-  :init
-  (ghostel-compile-global-mode 1))
+  :hook (after-init . (lambda () (ghostel-compile-global-mode 1))))
 
 (use-package auctex
   :defer t)
@@ -525,8 +538,8 @@
   (setq popper-reference-buffers '("\\*Messages\\*"
 				   "[oO]utput\\*$"
 				   "\\*Async Shell Command\\*"
-				   help-mode
-				   compilation-mode
+				   "\\*Help\\*"
+				   "\\*compilation\\*"
 				   Man-mode)
 	popper-group-function nil
 	popper-window-height 25)
@@ -543,9 +556,10 @@
   :config
   (setq gptel-model 'gemma4:granite4.1:8b
 	gptel-backend (gptel-make-ollama "Ollama (remote)"
-			:host "10.0.0.31:11434"
+			:host "10.0.2.101:11434"
 			:stream t
-			:models '("gemma4:26b-agent"
+			:models '("hf.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF:latest"
+				  "gemma4:26b-agent"
 				  "gemma4:12b"
 				  "granite4.1:8b"
 				  "mathstral:7b"))

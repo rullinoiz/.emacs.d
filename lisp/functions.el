@@ -143,7 +143,7 @@ associated value."
   (interactive)
   (with-editor-async-shell-command "crontab -e"))
 
-(defun my/get-regexp-matches-in-file (r filepath &optional group-num)
+(defun use-package-configure--regexp-matches-in-file (r filepath &optional group-num)
   "Returns a list of matches in FILEPATH with regexp R."
   (setq group-num (or group-num 0))
   (with-temp-buffer
@@ -160,7 +160,7 @@ associated value."
   (interactive (list
 		(completing-read
 		 "Package: " 
-		 (my/get-regexp-matches-in-file "^ *[^;](use-package \\([^()\n]+\\))?" user-init-file 1)
+		 (use-package-configure--regexp-matches-in-file "^ *[^;](use-package \\([^()\n]+\\))?" user-init-file 1)
 		 nil t)))
   (open-init-file)
   (goto-char (point-min))
