@@ -1,5 +1,8 @@
 ;;; -*- lexical-binding: t -*-
 
+;;(benchmark-init/activate)
+;;(add-hook 'after-init-hook #'benchmark-init/deactivate)
+
 (setq inhibit-startup-screen t)
 
 ;; supa speed
@@ -13,13 +16,11 @@
 ;;(set-frame-parameter (selected-frame) 'alpha-background 60)
 ;;(add-to-list 'default-frame-alist '(alpha-background . 60))
 
-(add-to-list 'default-frame-alist '(vertical-scroll-bars . nil))
-
-(add-to-list 'custom-theme-load-path (expand-file-name "themes" user-emacs-directory))
-
-(add-to-list 'load-path (expand-file-name "modules" user-emacs-directory))
-(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
-(add-to-list 'load-path (expand-file-name "icons" user-emacs-directory))
+(push '(vertical-scroll-bars . nil) default-frame-alist)
+(push (expand-file-name "themes" user-emacs-directory) custom-theme-load-path)
+(push (expand-file-name "modules" user-emacs-directory) load-path)
+(push (expand-file-name "lisp" user-emacs-directory) load-path)
+(push (expand-file-name "icons" user-emacs-directory) load-path)
 
 (defun --remove-background (&optional frame)
   (or frame (setq frame (selected-frame)))
