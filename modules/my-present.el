@@ -1,7 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
-(use-package hide-mode-line)
-(use-package olivetti)
+(require 'macros)
+
+(use-package hide-mode-line
+  :defer t)
+(use-package olivetti
+  :defer t)
 
 (defun my/presentation-setup ()
   "Main presentation start hook handler for setting fonts, disabling line numbers, and other improvements"
@@ -10,11 +14,14 @@
   (hide-mode-line-mode 1)
   (text-scale-mode 1)
   (olivetti-mode 1)
-  (setq-local face-remapping-alist '((default variable-pitch default)))
-  (setq text-scale-mode-amount 4
-	org-hide-emphasis-markers t
-	cursor-type nil
-	olivetti-minimum-body-width 100)
+  (page-break-lines-mode 1)
+  
+  (setq-push face-remapping-alist '((default variable-pitch default))
+	     text-scale-mode-amount 4
+	     org-hide-emphasis-markers t
+	     cursor-type nil
+	     olivetti-minimum-body-width 100)
+  
   (set-face-attribute 'org-meta-line nil :foreground (face-attribute 'default :background))
   (font-lock-flush))
 
@@ -24,9 +31,14 @@
   (display-line-numbers-mode 1)
   (hide-mode-line-mode 0)
   (olivetti-mode 0)
-  (setq-local face-remapping-alist '())
-  (setq org-hide-emphasis-markers nil
-	cursor-type 'box)
+  (page-break-lines-mode 0)
+  
+  (setq-pop face-remapping-alist
+	    org-hide-emphasis-markers
+	    cursor-type
+	    text-scale-mode-amount
+	    olivetti-minimum-body-width)
+  
   (org-show-all)
   (set-face-attribute 'org-meta-line nil :foreground nil)
   (font-lock-flush))
@@ -49,14 +61,12 @@
      (set-face-attribute face nil :inherit '(shadow fixed-pitch)))
    (set-face-attribute 'org-block nil :inherit '(fixed-pitch) :background "gray10")))
 
-(use-package org
-  :bind (:map org-mode-map
-	      ("<f9>" . org-tree-slide-mode))
-  :config
-  (setq org-image-actual-width nil)
-  (org-display-inline-images))
+(with-eval-after-load 'org-mode
+  (keymap-set org-mode-map "<f9>" '("Begin Presentation" . org-tree-slide-mode)))
 
 (use-package org-tree-slide
+  :defer t
+  :after org
   :hook ((org-tree-slide-play . my/presentation-setup)
          (org-tree-slide-stop . my/presentation-end))
   :custom
