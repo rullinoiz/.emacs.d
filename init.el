@@ -294,13 +294,18 @@
 	 (python-mode . eglot-ensure)
 	 (java-ts-mode . eglot-ensure)
 	 (kotlin-mode . eglot-ensure)
-	 (v-mode . eglot-ensure))
+	 (v-mode . eglot-ensure)
+	 (eglot-managed-mode . (lambda () (when (derived-mode-p 'java-ts-mode)
+					    (when-let* ((server (eglot-current-server)))
+					      (eglot-signal-didChangeConfiguration server)))))
+	 )
   :config
   (add-to-list 'eglot-server-programs '(kotlin-mode . ("kotlin-lsp" "--stdio")))
   (add-to-list 'eglot-server-programs '(v-mode . ("vls")))
   (setq eglot-connect-timeout 120
 	eglot-report-progress nil
-	eglot-code-action-indications nil))
+	eglot-code-action-indications nil
+	project-vc-extra-root-markers '(".project")))
 
 (use-package c-ts-mode
   :ensure nil
